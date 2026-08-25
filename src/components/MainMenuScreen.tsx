@@ -8,9 +8,15 @@ interface MainMenuScreenProps {
   currentUser?: User | null;
   onNewGame?: () => void;
   onStartScheduledGame: (game: any) => void;
+  isDarkMode?: boolean;
 }
 
-export default function MainMenuScreen({ currentUser, onNewGame, onStartScheduledGame }: MainMenuScreenProps) {
+export default function MainMenuScreen({
+  currentUser,
+  onNewGame,
+  onStartScheduledGame,
+  isDarkMode = true,
+}: MainMenuScreenProps) {
   const [scheduledGames, setScheduledGames] = useState<any[]>([]);
   const [videoPlaying, setVideoPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -105,23 +111,29 @@ export default function MainMenuScreen({ currentUser, onNewGame, onStartSchedule
       {/* Main Menu Content */}
       <div className="flex-1 w-full flex flex-col py-6 px-4 md:px-0 max-w-lg mx-auto z-10">
 
-        {/* Banner image with rounded edge fades */}
-        <div className="relative w-full max-w-md mx-auto h-44 md:h-56 overflow-hidden flex items-center justify-center mb-6">
+        {/* Banner image with rounded edge fades in dark mode, clean reversed-color image in light mode */}
+        <div className="scorekeeper-banner relative w-full max-w-md mx-auto h-44 md:h-56 overflow-hidden flex items-center justify-center mb-6">
           <img
             src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/scorekeeper.png?v=1786003535"
             alt="Scorekeeper"
-            className="w-full h-full object-contain"
-            style={{
-              WebkitMaskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)',
-              maskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)'
-            }}
+            className={`w-full h-full object-contain transition-all duration-300 ${!isDarkMode ? 'invert' : ''}`}
+            style={
+              isDarkMode
+                ? {
+                    WebkitMaskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)',
+                    maskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)',
+                  }
+                : undefined
+            }
           />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(ellipse 85% 80% at 50% 50%, rgba(18, 20, 20, 0) 30%, rgba(18, 20, 20, 0.5) 70%, #121414 98%)'
-            }}
-          />
+          {isDarkMode && (
+            <div
+              className="glassmorphism-overlay absolute inset-0 pointer-events-none"
+              style={{
+                background: 'radial-gradient(ellipse 85% 80% at 50% 50%, rgba(18, 20, 20, 0) 30%, rgba(18, 20, 20, 0.5) 70%, #121414 98%)'
+              }}
+            />
+          )}
         </div>
 
         {/* Action Buttons & Info */}

@@ -178,3 +178,13 @@ body {
 .light-mode .border-\[\#2A2A2A\] {
   border-color: #ced4da !important;
 }
+
+.light-mode .scorekeeper-banner img {
+  filter: invert(1) !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.light-mode .scorekeeper-banner .glassmorphism-overlay {
+  display: none !important;
+}

@@ -283,6 +283,8 @@ export default function App() {
                 <MainMenuScreen
                   currentUser={currentUser}
                   onStartScheduledGame={handleStartScheduledGame}
+                  onNewGame={handleNewGame}
+                  isDarkMode={isDarkMode}
                 />
               )}
 
