@@ -25,6 +25,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
   const [editProfileForm, setEditProfileForm] = useState<any>({});
   const [editEquipmentForm, setEditEquipmentForm] = useState<any>({});
 
+  const [jobsData, setJobsData] = useState<any[]>([]);
+
   const [rsvps, setRsvps] = useState<Record<string, string>>({
     'evt-1': 'Maybe',
     'evt-2': 'Attending'
@@ -82,6 +84,23 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         setEditEquipmentForm(eqMap);
       }
 
+      // Fetch jobs data
+      const jobsRes = await fetchGasData(url, { action: 'getEcosystemData', sheetName: 'jobs' }, forceRefresh);
+      const jobsResult = await jobsRes.json();
+      if (jobsResult.status === 'Success') {
+        const jobsHeaders = jobsResult.data[0];
+        const jobsRows = jobsResult.data.slice(1);
+        const playerJobs = jobsRows.filter((r: any[]) => r[1] === personId && r[2] !== 'Deleted'); // index 1 is person_id, filter out deleted
+
+        const mappedJobs = playerJobs.map((row: any[]) => {
+            return jobsHeaders.reduce((acc: any, curr: string, idx: number) => {
+              acc[curr] = row[idx];
+              return acc;
+            }, {});
+        });
+        setJobsData(mappedJobs);
+      }
+
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -94,8 +113,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
   }, [personId]);
 
   const displayName = profileData
-    ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || viewedPerson?.name || currentUser?.email || "My Profile"
-    : (viewedPerson?.name || currentUser?.email || "My Profile");
+    ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || viewedPerson?.name || currentUser?.username || currentUser?.email || "My Profile"
+    : (viewedPerson?.name || currentUser?.username || currentUser?.email || "My Profile");
 
   const dummyBadges: Achievement[] = [
     { id: 'b1', name: '100 Career Goals' },
@@ -189,6 +208,92 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       setError(e.message);
       setLoading(false);
     }
+  };
+
+  const handleSaveJob = async (job: any = null) => {
+    if (!personId) return;
+    setLoading(true);
+    try {
+      const url = getGasUrl();
+      if (!url) throw new Error("No database URL set.");
+
+      let jobId = job?.id;
+      let newJobType = '';
+      let newOrg = '';
+      let newIsActive = true;
+
+      if (job) {
+          // Edit existing - for simplicity using prompts or could use a proper form
+          newJobType = prompt("Enter job type/title:", job.job_type) || job.job_type;
+          newOrg = prompt("Enter organization/club:", job.organization_id) || job.organization_id;
+          newIsActive = confirm("Is this job currently active?");
+      } else {
+          // Add new
+          jobId = `job-${Date.now()}`;
+          newJobType = prompt("Enter job type/title (e.g. Head Coach):") || '';
+          newOrg = prompt("Enter organization/club:") || '';
+          if (!newJobType) {
+              setLoading(false);
+              return; // Cancelled
+          }
+      }
+
+      const res = await fetchGasData(url, {
+        action: 'updateRow',
+        sheetName: 'jobs',
+        idColumn: 'id',
+        idValue: jobId,
+        updateData: {
+          person_id: personId,
+          job_type: newJobType,
+          organization_id: newOrg,
+          is_active: newIsActive
+        }
+      });
+
+      const result = await res.json();
+      if (result.status === 'Success') {
+        fetchData(true);
+      } else {
+        throw new Error(result.error || 'Failed to save job');
+      }
+    } catch(e: any) {
+      setError(e.message);
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveJob = async (jobId: string) => {
+      if (!confirm("Are you sure you want to remove this job?")) return;
+      // In a real app we might delete the row, but here we can just mark it inactive or blank it out if delete isn't supported.
+      // Since updateRow adds or updates, let's just mark it inactive and "Deleted" for now.
+      if (!personId) return;
+      setLoading(true);
+      try {
+        const url = getGasUrl();
+        if (!url) throw new Error("No database URL set.");
+
+        const res = await fetchGasData(url, {
+          action: 'updateRow',
+          sheetName: 'jobs',
+          idColumn: 'id',
+          idValue: jobId,
+          updateData: {
+            is_active: false,
+            job_type: "Deleted"
+          }
+        });
+
+        const result = await res.json();
+        if (result.status === 'Success') {
+          fetchData(true);
+        } else {
+          throw new Error(result.error || 'Failed to remove job');
+        }
+      } catch(e: any) {
+        setError(e.message);
+        setLoading(false);
+      }
   };
 
   const handleEditPhoto = async (photoType: 'profile' | 'cover') => {
@@ -322,7 +427,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             {displayName}
                         </h1>
                         <p className="text-on-surface-variant font-medium mt-1">
-                            {viewedPerson?.job || "Head Coach"} • {viewedPerson?.club || "Blackout HC"}
+                            {jobsData.find((j: any) => j.is_active)?.job_type || jobsData[0]?.job_type || viewedPerson?.job || "Head Coach"} • {jobsData.find((j: any) => j.is_active)?.organization_id || jobsData[0]?.organization_id || viewedPerson?.club || "Blackout HC"}
                         </p>
                     </div>
                 </div>
@@ -515,18 +620,37 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-white font-bold text-xl">Assigned Jobs & Roles</h3>
                                 {isOwnProfile && (
-                                    <button className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1">
+                                    <button onClick={() => handleSaveJob()} className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1">
                                         <Plus className="w-4 h-4" /> Add
                                     </button>
                                 )}
                             </div>
-                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col gap-1">
-                                <div className="flex justify-between items-start">
-                                    <span className="text-white font-bold text-lg">{viewedPerson?.job || "Head Coach"}</span>
-                                    <span className="text-xs bg-[#2A2A2A] text-gray-300 px-2 py-1 rounded-md">{viewedPerson?.club || "Blackout HC"}</span>
+
+                            {jobsData.length > 0 ? jobsData.map((job: any) => (
+                                <div key={job.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col gap-1 relative group">
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-white font-bold text-lg">{job.job_type || "Unknown Job"}</span>
+                                        <span className={`text-xs px-2 py-1 rounded-md ${job.is_active ? 'bg-[#2A2A2A] text-gray-300' : 'bg-red-900/50 text-red-300'}`}>
+                                            {job.organization_id || "No Org"} {job.is_active ? '' : '(Inactive)'}
+                                        </span>
+                                    </div>
+                                    <span className="text-sm text-on-surface-variant">Role: {job.job_type || "Role"}</span>
+
+                                    {isOwnProfile && (
+                                        <div className="absolute top-4 right-4 hidden group-hover:flex gap-2">
+                                            <button onClick={() => handleSaveJob(job)} className="text-tertiary hover:text-white p-1">
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleRemoveJob(job.id)} className="text-red-500 hover:text-red-400 p-1">
+                                                X
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <span className="text-sm text-on-surface-variant">Role: {viewedPerson?.role || "Coach"}</span>
-                            </div>
+                            )) : (
+                                <div className="text-on-surface-variant text-sm">No jobs listed.</div>
+                            )}
+
                         </div>
                     )}
 
