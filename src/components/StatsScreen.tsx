@@ -2,13 +2,11 @@ import { dbSchema } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Trophy, Users, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 interface StatsScreenProps {
   onBack: () => void;
 }
-
-import { Shield } from 'lucide-react';
 
 export default function StatsScreen({ onBack }: StatsScreenProps) {
   const [activeTab, setActiveTab] = useState<'standings' | 'stats' | 'goalies'>('standings');
@@ -72,29 +70,26 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
         <div className="flex overflow-x-auto no-scrollbar gap-1 bg-[#050505] border border-[#2A2A2A] rounded-lg p-1">
           <button
             onClick={() => setActiveTab('standings')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
+            className={`flex-1 flex items-center justify-center py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
               activeTab === 'standings' ? 'bg-tertiary text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
-            <Trophy className="w-4 h-4" />
             Standen
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
+            className={`flex-1 flex items-center justify-center py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
               activeTab === 'stats' ? 'bg-tertiary text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
-            <Users className="w-4 h-4" />
             Speler Stats
           </button>
           <button
             onClick={() => setActiveTab('goalies')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
+            className={`flex-1 flex items-center justify-center py-2 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors ${
               activeTab === 'goalies' ? 'bg-tertiary text-black' : 'text-gray-500 hover:text-white'
             }`}
           >
-            <Shield className="w-4 h-4" />
             Goalie Stats
           </button>
         </div>
