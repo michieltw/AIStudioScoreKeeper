@@ -18,7 +18,10 @@ export default function MainMenuScreen({
   isDarkMode = true,
 }: MainMenuScreenProps) {
   const [scheduledGames, setScheduledGames] = useState<any[]>([]);
+  const [pastGames, setPastGames] = useState<any[]>([]);
   const [videoPlaying, setVideoPlaying] = useState(true);
+  const [activeTab, setActiveTab] = useState<'schedule' | 'calendar'>('schedule');
+  const [calendarFilter, setCalendarFilter] = useState<'week' | 'month' | 'season'>('week');
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -29,14 +32,15 @@ export default function MainMenuScreen({
       });
     }
 
-    const fetchScheduledGames = async () => {
+    const fetchGamesData = async () => {
       const gasUrl = getGasUrl();
       if (gasUrl) {
         try {
-          const res = await fetchGasData(gasUrl, { action: 'getScheduledGames' });
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 1) {
-            const mapped = data.slice(1).map((row, i) => ({
+          // Fetch scheduled games
+          const scheduledRes = await fetchGasData(gasUrl, { action: 'getScheduledGames' });
+          const scheduledData = await scheduledRes.json();
+          if (Array.isArray(scheduledData) && scheduledData.length > 1) {
+            const mapped = scheduledData.slice(1).map((row, i) => ({
               id: row[0] || Date.now().toString() + i,
               homeTeam: row[1] || '',
               awayTeam: row[2] || '',
@@ -48,21 +52,39 @@ export default function MainMenuScreen({
             })).filter(g => g.homeTeam && g.awayTeam);
             if (mapped.length > 0) {
               setScheduledGames(mapped);
-              return; // Successfully loaded from GAS
             }
           }
-        } catch (e) {}
-      }
 
-      // Fallback to local storage
-      const saved = localStorage.getItem('blackout_scheduled_games');
-      if (saved) {
-        try {
-          setScheduledGames(JSON.parse(saved));
+          // Fetch past games
+          const gamesRes = await fetchGasData(gasUrl, { action: 'getGames' });
+          const gamesData = await gamesRes.json();
+          if (Array.isArray(gamesData) && gamesData.length > 1) {
+             const mappedGames = gamesData.slice(1).map((row, i) => ({
+                id: row[0] || `past-${Date.now()}-${i}`,
+                date: row[1] || '',
+                homeTeam: row[2] || '',
+                awayTeam: row[3] || '',
+                homeScore: row[4] !== undefined ? row[4] : '',
+                awayScore: row[5] !== undefined ? row[5] : '',
+                location: row[8] || ''
+             })).filter(g => g.homeTeam && g.awayTeam);
+             if (mappedGames.length > 0) {
+                setPastGames(mappedGames);
+             }
+          }
+
         } catch (e) {}
+      } else {
+        // Fallback to local storage
+        const saved = localStorage.getItem('blackout_scheduled_games');
+        if (saved) {
+          try {
+            setScheduledGames(JSON.parse(saved));
+          } catch (e) {}
+        }
       }
     };
-    fetchScheduledGames();
+    fetchGamesData();
   }, []);
 
   const handleVideoEnd = () => {
@@ -115,25 +137,28 @@ export default function MainMenuScreen({
       <div className="flex-1 w-full flex flex-col py-6 px-4 md:px-0 max-w-lg mx-auto z-10">
 
         {/* Banner image with rounded edge fades in dark mode, clean reversed-color image in light mode */}
-        <div className="scorekeeper-banner relative w-full max-w-md mx-auto h-44 md:h-56 overflow-hidden flex items-center justify-center mb-6">
+        <div className="scorekeeper-banner relative w-full max-w-md mx-auto h-44 md:h-56 overflow-hidden flex items-center justify-center mb-6 rounded-lg">
           <img
-            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/scorekeeper.png?v=1786003535"
-            alt="Scorekeeper"
-            className={`w-full h-full object-contain transition-all duration-300 ${!isDarkMode ? 'invert' : ''}`}
+            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/kardinge2.png?v=1784547269"
+            alt="Dashboard Banner"
+            className={`w-full h-full object-cover transition-all duration-300`}
             style={
               isDarkMode
                 ? {
-                    WebkitMaskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 88% 85% at 50% 50%, black 45%, transparent 100%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
+                    maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
                   }
-                : undefined
+                : {
+                    WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
+                    maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
+                  }
             }
           />
           {isDarkMode && (
             <div
               className="glassmorphism-overlay absolute inset-0 pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse 85% 80% at 50% 50%, rgba(18, 20, 20, 0) 30%, rgba(18, 20, 20, 0.5) 70%, #121414 98%)'
+                background: 'radial-gradient(ellipse 90% 90% at 50% 50%, rgba(18, 20, 20, 0) 40%, rgba(18, 20, 20, 0.6) 80%, #121414 100%)'
               }}
             />
           )}
@@ -172,6 +197,74 @@ export default function MainMenuScreen({
             </p>
           </div>
 
+          {/* Dashboard Tabs */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('schedule')}
+              className={`flex-1 py-2 text-sm font-bold font-mono tracking-wider rounded transition-colors ${
+                activeTab === 'schedule'
+                  ? 'bg-tertiary text-black'
+                  : 'bg-[#050505] text-on-surface-variant border border-[#2A2A2A] hover:text-white'
+              }`}
+            >
+              SCHEDULE
+            </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`flex-1 py-2 text-sm font-bold font-mono tracking-wider rounded transition-colors ${
+                activeTab === 'calendar'
+                  ? 'bg-tertiary text-black'
+                  : 'bg-[#050505] text-on-surface-variant border border-[#2A2A2A] hover:text-white'
+              }`}
+            >
+              CALENDAR
+            </button>
+          </div>
+
+          {/* Schedule View */}
+          {activeTab === 'schedule' && (
+            <div className="flex flex-col gap-4">
+              {/* Recent Results (Past 2 games) */}
+              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
+                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Recent Results</span>
+                {pastGames.length > 0 ? (
+                  pastGames.slice(-2).map(game => (
+                    <div key={game.id} className="w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 flex items-center justify-between">
+                      <div className="flex flex-col flex-1">
+                        <span className="text-sm font-bold text-white">{game.homeTeam} vs {game.awayTeam}</span>
+                        <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.location}</span>
+                      </div>
+                      <div className="flex flex-col items-end pl-4 font-mono font-bold">
+                         <span className="text-white text-sm">{game.homeScore} - {game.awayScore}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 px-2">No recent results found.</p>
+                )}
+              </div>
+
+              {/* Upcoming Games (Next 2 games) */}
+              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
+                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
+                {scheduledGames.length > 0 ? (
+                  scheduledGames.slice(0, 2).map(game => (
+                    <button
+                      key={game.id}
+                      onClick={() => onStartScheduledGame(game)}
+                      className="w-full text-left bg-surface-container-low hover:bg-white/5 border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white group-hover:text-tertiary transition-colors">{game.homeTeam} vs {game.awayTeam}</span>
+                        <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.time} • {game.location}</span>
+                      </div>
+                      <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 px-2">No upcoming games scheduled.</p>
+                )}
+              </div>
           {scheduledGames.length > 0 && (
             <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
               <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
@@ -195,6 +288,70 @@ export default function MainMenuScreen({
                 </button>
               ))}
             </div>
+          )}
+
+          {/* Calendar View */}
+          {activeTab === 'calendar' && (
+             <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-md h-96">
+                <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-2">
+                  <span className="text-sm font-bold text-white">Filter By:</span>
+                  <div className="flex gap-2">
+                    {['week', 'month', 'season'].map(filter => (
+                      <button
+                        key={filter}
+                        onClick={() => setCalendarFilter(filter as any)}
+                        className={`px-3 py-1 text-xs font-mono font-bold tracking-widest uppercase rounded transition-colors ${
+                          calendarFilter === filter
+                            ? 'bg-tertiary/20 text-tertiary border border-tertiary/50'
+                            : 'bg-surface-container-low text-gray-400 border border-outline-variant/30 hover:text-white'
+                        }`}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2">
+                  {(() => {
+                    const now = new Date();
+                    let filteredGames = scheduledGames;
+
+                    if (calendarFilter === 'week') {
+                      const nextWeek = new Date(now);
+                      nextWeek.setDate(now.getDate() + 7);
+                      filteredGames = scheduledGames.filter(game => {
+                         const gameDate = new Date(game.date);
+                         // If invalid date, include it for safety or exclude it, let's include if date parsing fails but mostly try to filter
+                         if (isNaN(gameDate.getTime())) return true;
+                         return gameDate >= now && gameDate <= nextWeek;
+                      });
+                    } else if (calendarFilter === 'month') {
+                      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                      filteredGames = scheduledGames.filter(game => {
+                         const gameDate = new Date(game.date);
+                         if (isNaN(gameDate.getTime())) return true;
+                         return gameDate >= now && gameDate <= endOfMonth;
+                      });
+                    }
+
+                    if (filteredGames.length === 0) {
+                      return <div className="text-sm text-gray-500 py-4 text-center">No games found for the selected {calendarFilter}.</div>;
+                    }
+
+                    return filteredGames.map(game => (
+                      <div key={game.id} className="w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-3 flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold text-tertiary">{game.homeTeam} vs {game.awayTeam}</span>
+                          <span className="text-xs font-mono text-gray-400 bg-black/50 px-2 py-0.5 rounded">{game.matchType || 'Game'}</span>
+                        </div>
+                        <span className="text-[11px] font-mono text-gray-300">{game.date} • {game.time}</span>
+                        <span className="text-[11px] font-mono text-gray-500">{game.location}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+             </div>
           )}
 
         </div>
