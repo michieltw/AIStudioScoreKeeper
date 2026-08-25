@@ -397,6 +397,52 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({status: "Success", data: values})).setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (data.action === 'updateRow') {
+      const { sheetName, idColumn, idValue, updateData } = data;
+      const sheet = ss.getSheetByName(sheetName);
+      if (!sheet) throw new Error("Sheet niet gevonden: " + sheetName);
+
+      const values = sheet.getDataRange().getValues();
+      const headers = values[0];
+      const idColIndex = headers.indexOf(idColumn);
+      if (idColIndex === -1) throw new Error("ID kolom niet gevonden: " + idColumn);
+
+      let rowIndexToUpdate = -1;
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][idColIndex] === idValue) {
+          rowIndexToUpdate = i;
+          break;
+        }
+      }
+
+      if (rowIndexToUpdate === -1) {
+        // If not found, optionally append a new row
+        const newRow = new Array(headers.length).fill('');
+        newRow[idColIndex] = idValue;
+
+        Object.keys(updateData).forEach(key => {
+          const colIndex = headers.indexOf(key);
+          if (colIndex !== -1) {
+            newRow[colIndex] = updateData[key];
+          }
+        });
+
+        sheet.appendRow(newRow.map(sanitizeField));
+      } else {
+        // Update existing row
+        Object.keys(updateData).forEach(key => {
+          const colIndex = headers.indexOf(key);
+          if (colIndex !== -1) {
+            // Arrays are 0-indexed, but getRange is 1-indexed. Plus we skip header row.
+            // rowIndexToUpdate is 1-based relative to data array (index 1 = row 2)
+            sheet.getRange(rowIndexToUpdate + 1, colIndex + 1).setValue(sanitizeField(updateData[key]));
+          }
+        });
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({status: "Success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.action === 'saveGame' || data.logs) {
       const logsSheet = ss.getSheetByName("ActionLogs");
       if (!logsSheet) throw new Error("ActionLogs sheet niet gevonden");
