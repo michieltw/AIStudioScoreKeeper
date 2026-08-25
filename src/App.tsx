@@ -48,18 +48,29 @@ export default function App() {
   } | null>(null);
 
   const handleStartScheduledGame = (gameData: any) => {
+    if (currentUser?.role === 'Guest') return;
     setScheduledGameData(gameData);
     setCurrentScreen('settings');
     setIsSidebarOpen(false);
   };
 
   const handleNewGame = () => {
+    if (currentUser?.role === 'Guest') return;
     setScheduledGameData(null);
     setCurrentScreen('settings');
     setIsSidebarOpen(false);
   };
 
+  const isGuest = currentUser?.role === 'Guest';
+  const isAdmin = currentUser && currentUser.role === 'Admin';
+  const isTeamManagerPlus = currentUser && ['Admin', 'League Manager', 'Team Manager'].includes(currentUser.role);
+  const isPlayerPlus = currentUser && ['Admin', 'League Manager', 'Team Manager', 'Player'].includes(currentUser.role);
+  const isLeagueManagerPlus = currentUser && ['Admin', 'League Manager'].includes(currentUser.role);
+
   const navigateTo = (screen: Screen) => {
+    if ((screen === 'database' || screen === 'settings' || screen === 'scorekeeper') && isGuest) {
+      return;
+    }
     if (screen === 'my-profile') setViewedPerson(null);
     setCurrentScreen(screen);
     setIsSidebarOpen(false);
@@ -70,12 +81,6 @@ export default function App() {
     setCurrentScreen('splash');
     setIsSidebarOpen(false);
   };
-
-  const isAdmin = currentUser && currentUser.role === 'Admin';
-
-  const isTeamManagerPlus = currentUser && ['Admin', 'League Manager', 'Team Manager'].includes(currentUser.role);
-  const isPlayerPlus = currentUser && ['Admin', 'League Manager', 'Team Manager', 'Player'].includes(currentUser.role);
-  const isLeagueManagerPlus = currentUser && ['Admin', 'League Manager'].includes(currentUser.role);
 
   const renderSidebarContent = () => (
     <div className="flex flex-col h-full bg-[#050505] text-on-surface-variant p-4 w-64 border-r border-[#2A2A2A]">
@@ -101,9 +106,11 @@ export default function App() {
 
         <div className="my-2 border-t border-[#2A2A2A]"></div>
 
-        <button onClick={() => navigateTo('database')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'database' ? 'bg-white/10 text-white' : ''}`}>
-          Database
-        </button>
+        {!isGuest && (
+          <button onClick={() => navigateTo('database')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'database' ? 'bg-white/10 text-white' : ''}`}>
+            Database
+          </button>
+        )}
         <button onClick={() => navigateTo('stats')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'stats' ? 'bg-white/10 text-white' : ''}`}>
           Stats
         </button>
@@ -325,7 +332,22 @@ export default function App() {
               )}
 
               {currentScreen === 'database' && (
-                <DatabaseScreen onBack={() => setCurrentScreen('main-menu')} />
+                !isGuest ? (
+                  <DatabaseScreen onBack={() => setCurrentScreen('main-menu')} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
+                    <h2 className="text-xl font-bold text-error font-display uppercase tracking-wider">Access Restricted</h2>
+                    <p className="text-sm text-on-surface-variant max-w-md">
+                      Guest accounts are not authorized to view or edit database configuration. Please log in with an authorized account.
+                    </p>
+                    <button
+                      onClick={() => setCurrentScreen('main-menu')}
+                      className="bg-tertiary text-black font-bold px-4 py-2 rounded font-mono text-xs uppercase"
+                    >
+                      Back to Dashboard
+                    </button>
+                  </div>
+                )
               )}
 
               {currentScreen === 'stats' && (
@@ -333,15 +355,35 @@ export default function App() {
               )}
 
               {currentScreen === 'settings' && (
-                <SettingsScreen
-                  scheduledGameData={scheduledGameData}
-                  contract={defaultSettingsContract}
-                  onStart={() => setCurrentScreen('scorekeeper')}
-                  onBack={() => setCurrentScreen('main-menu')}
-                />
+                !isGuest ? (
+                  <SettingsScreen
+                    scheduledGameData={scheduledGameData}
+                    contract={defaultSettingsContract}
+                    onStart={() => setCurrentScreen('scorekeeper')}
+                    onBack={() => setCurrentScreen('main-menu')}
+                  />
+                ) : (
+                  <MainMenuScreen
+                    currentUser={currentUser}
+                    onStartScheduledGame={handleStartScheduledGame}
+                    onNewGame={handleNewGame}
+                    isDarkMode={isDarkMode}
+                  />
+                )
               )}
 
-              {currentScreen === 'scorekeeper' && <ScorekeeperScreen contract={defaultSettingsContract} onBack={() => setCurrentScreen('settings')} />}
+              {currentScreen === 'scorekeeper' && (
+                !isGuest ? (
+                  <ScorekeeperScreen contract={defaultSettingsContract} onBack={() => setCurrentScreen('settings')} />
+                ) : (
+                  <MainMenuScreen
+                    currentUser={currentUser}
+                    onStartScheduledGame={handleStartScheduledGame}
+                    onNewGame={handleNewGame}
+                    isDarkMode={isDarkMode}
+                  />
+                )
+              )}
 
               {currentScreen === 'setup-wizard' && <SetupWizardScreen onCancel={() => setCurrentScreen('main-menu')} onFinish={() => setCurrentScreen('main-menu')} />}
             </div>

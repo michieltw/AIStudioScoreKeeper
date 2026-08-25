@@ -83,4 +83,30 @@ describe('MainMenuScreen', () => {
     // Skip button should disappear after clicking
     expect(screen.queryByText('SKIP')).not.toBeInTheDocument();
   });
+
+  it('prevents guest users from starting a new game or scheduled games', async () => {
+    const guestUser = { id: 'guest', email: 'guest@blackouthockey.com', role: 'Guest' as const };
+    const games = [{
+      id: '1', homeTeam: 'Team A', awayTeam: 'Team B',
+      date: '2023-10-27', time: '20:00', location: 'Rink 1',
+      competition: 'Friendly', matchType: 'Exhibition'
+    }];
+    localStorage.setItem('blackout_scheduled_games', JSON.stringify(games));
+
+    render(<MainMenuScreen {...mockProps} currentUser={guestUser} />);
+
+    const newGameButton = screen.getByRole('button', { name: /NEW GAME/i });
+    expect(newGameButton).toBeDisabled();
+    fireEvent.click(newGameButton);
+    expect(mockProps.onNewGame).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(screen.getByText('Team A vs Team B')).toBeInTheDocument();
+    });
+
+    const gameButton = screen.getByText('Team A vs Team B').closest('button')!;
+    expect(gameButton).toBeDisabled();
+    fireEvent.click(gameButton);
+    expect(mockProps.onStartScheduledGame).not.toHaveBeenCalled();
+  });
 });

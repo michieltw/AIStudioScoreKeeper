@@ -69,6 +69,9 @@ export default function MainMenuScreen({
     setVideoPlaying(false);
   };
 
+  const isGuest = currentUser?.role === 'Guest';
+  const isPlayerPlus = !isGuest && (!currentUser || ['Admin', 'League Manager', 'Team Manager', 'Player'].includes(currentUser.role));
+
   return (
     <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
       {/* Background Outline Player */}
@@ -140,12 +143,23 @@ export default function MainMenuScreen({
         <div className="w-full flex flex-col gap-4">
 
           <button
-            onClick={onNewGame}
-            className="w-full bg-tertiary text-black font-display text-[20px] md:text-[22px] font-bold py-4 rounded-lg raised-element bg-button-gradient hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_0_15px_rgba(233,196,0,0.2)]"
+            onClick={() => isPlayerPlus && onNewGame?.()}
+            disabled={!isPlayerPlus}
+            className={`w-full font-display text-[20px] md:text-[22px] font-bold py-4 rounded-lg raised-element transition-all flex items-center justify-center gap-3 ${
+              isPlayerPlus
+                ? 'bg-tertiary text-black bg-button-gradient hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(233,196,0,0.2)] cursor-pointer'
+                : 'bg-surface-container-high text-gray-500 opacity-50 cursor-not-allowed'
+            }`}
+            title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
           >
             <Play fill="currentColor" className="w-6 h-6" />
             NEW GAME
           </button>
+          {!isPlayerPlus && (
+            <p className="text-[11px] font-mono text-center text-gray-500 -mt-2">
+              Guest mode: Log in with a player or manager account to start new games.
+            </p>
+          )}
 
           {/* Announcements Section */}
           <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-2 shadow-md mb-4">
@@ -164,14 +178,20 @@ export default function MainMenuScreen({
               {scheduledGames.map(game => (
                 <button
                   key={game.id}
-                  onClick={() => onStartScheduledGame(game)}
-                  className="w-full text-left bg-surface-container-low hover:bg-white/5 border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group"
+                  onClick={() => isPlayerPlus && onStartScheduledGame(game)}
+                  disabled={!isPlayerPlus}
+                  className={`w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group ${
+                    isPlayerPlus ? 'hover:bg-white/5 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                  }`}
+                  title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
                 >
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white group-hover:text-tertiary transition-colors">{game.homeTeam} vs {game.awayTeam}</span>
+                    <span className={`text-sm font-bold ${isPlayerPlus ? 'text-white group-hover:text-tertiary' : 'text-gray-400'} transition-colors`}>{game.homeTeam} vs {game.awayTeam}</span>
                     <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.time} • {game.location}</span>
                   </div>
-                  <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {isPlayerPlus && (
+                    <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </button>
               ))}
             </div>
