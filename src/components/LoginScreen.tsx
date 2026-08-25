@@ -9,6 +9,7 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,7 +19,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       const endpoint = isSignUp ? '/api/signup' : '/api/login';
       const body = isSignUp
-        ? JSON.stringify({ name, email, password })
+        ? JSON.stringify({ name, username, email, password })
         : JSON.stringify({ email, password });
 
       const res = await fetch(endpoint, {
@@ -80,23 +81,43 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             {/* Name Input (Sign Up Only) */}
             {isSignUp && (
-              <div className="flex flex-col gap-1">
-                <label className="font-mono text-[12px] font-bold tracking-widest text-on-surface-variant uppercase" htmlFor="name">
-                  Name
-                </label>
-                <div className="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded input-focus-ring transition-all duration-200">
-                  <UserIcon className="w-5 h-5 text-on-surface-variant absolute left-4 pointer-events-none" />
-                  <input
-                    className="w-full bg-transparent border-none text-on-surface pl-12 pr-4 py-3 focus:ring-0 placeholder:text-outline outline-none"
-                    id="name"
-                    placeholder="Full Name"
-                    required={isSignUp}
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="font-mono text-[12px] font-bold tracking-widest text-on-surface-variant uppercase" htmlFor="name">
+                    Name
+                  </label>
+                  <div className="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded input-focus-ring transition-all duration-200">
+                    <UserIcon className="w-5 h-5 text-on-surface-variant absolute left-4 pointer-events-none" />
+                    <input
+                      className="w-full bg-transparent border-none text-on-surface pl-12 pr-4 py-3 focus:ring-0 placeholder:text-outline outline-none"
+                      id="name"
+                      placeholder="Full Name"
+                      required={isSignUp}
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="font-mono text-[12px] font-bold tracking-widest text-on-surface-variant uppercase" htmlFor="username">
+                    Username
+                  </label>
+                  <div className="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded input-focus-ring transition-all duration-200">
+                    <UserIcon className="w-5 h-5 text-on-surface-variant absolute left-4 pointer-events-none" />
+                    <input
+                      className="w-full bg-transparent border-none text-on-surface pl-12 pr-4 py-3 focus:ring-0 placeholder:text-outline outline-none"
+                      id="username"
+                      placeholder="Username"
+                      required={isSignUp}
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Email Input */}

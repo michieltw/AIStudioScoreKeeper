@@ -21,6 +21,7 @@ export interface User {
   email: string;
   role: 'Admin' | 'League Manager' | 'Team Manager' | 'Player' | 'Guest';
   personId?: string;
+  username?: string;
 }
 
 export interface Person {
@@ -946,7 +947,7 @@ export interface PlayerLicense {
 
 export const dbSchema: Record<string, string[]> = {
   "users": ["id", "username", "email", "password_hash", "role", "display_name", "avatar_url", "bio", "active_from", "active_to", "created_at", "updated_at"],
-  "persons": ["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "bio", "created_at", "updated_at"],
+  "persons": ["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "cover_url", "bio", "created_at", "updated_at"],
   "jobs": ["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"],
   "organizations": ["id", "name", "country", "founded_year", "logo_url", "website", "description", "active_from", "active_to", "created_at", "updated_at"],
   "clubs": ["id", "organization_id", "name", "city", "country", "founded_year", "logo_url", "home_venue_id", "description", "active_from", "active_to", "created_at", "updated_at"],
