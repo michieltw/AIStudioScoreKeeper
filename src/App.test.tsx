@@ -66,4 +66,25 @@ describe('App Routing', () => {
     // Should still be on main menu
     expect(screen.getByText('NEW GAME')).toBeInTheDocument();
   });
+
+  it('restricts guests from starting games and viewing database', async () => {
+    render(<App />);
+
+    const guestButton = screen.getByRole('button', { name: /CONTINUE AS GUEST/i });
+    fireEvent.click(guestButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('NEW GAME')).toBeInTheDocument();
+    });
+
+    // Both Dashboard and Sidebar NEW GAME buttons are disabled
+    const newGameButtons = screen.getAllByRole('button', { name: /new game/i });
+    expect(newGameButtons.length).toBeGreaterThanOrEqual(1);
+    newGameButtons.forEach((btn) => {
+      expect(btn).toBeDisabled();
+    });
+
+    // Database button is not present in sidebar for guests
+    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+  });
 });
