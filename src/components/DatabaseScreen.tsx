@@ -179,6 +179,28 @@ const generateGasCodeSnippet = (token: string) => `function setupSheet() {
     draftsSheet.appendRow(["TeamID", "OriginalTeamID", "Year", "Round", "PickNumber", "PersonID"]);
     draftsSheet.getRange("A1:F1").setFontWeight("bold");
   }
+
+  // Ecosystem / Persons & Profiles
+  let personsSheet = ss.getSheetByName("persons");
+  if (!personsSheet) {
+    personsSheet = ss.insertSheet("persons");
+    personsSheet.appendRow(["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "cover_url", "bio", "created_at", "updated_at"]);
+    personsSheet.getRange("A1:O1").setFontWeight("bold");
+  }
+
+  let playerEquipmentSheet = ss.getSheetByName("player_equipment");
+  if (!playerEquipmentSheet) {
+    playerEquipmentSheet = ss.insertSheet("player_equipment");
+    playerEquipmentSheet.appendRow(["id", "person_id", "equipment_type", "brand_id", "serial_number", "purchase_date", "active_from", "active_to", "condition", "notes", "created_at", "updated_at"]);
+    playerEquipmentSheet.getRange("A1:L1").setFontWeight("bold");
+  }
+
+  let jobsSheet = ss.getSheetByName("jobs");
+  if (!jobsSheet) {
+    jobsSheet = ss.insertSheet("jobs");
+    jobsSheet.appendRow(["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"]);
+    jobsSheet.getRange("A1:H1").setFontWeight("bold");
+  }
 }
 
 function calculateStandingsAndStats() {

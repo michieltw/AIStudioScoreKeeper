@@ -87,4 +87,52 @@ describe('App Routing', () => {
     // Database button is not present in sidebar for guests
     expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
   });
+
+  it('restricts player and team manager from viewing database', async () => {
+    // Test Team Manager
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        user: { id: 'tm1', role: 'Team Manager', email: 'tm@blackout.com' }
+      })
+    });
+
+    const { unmount } = render(<App />);
+
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+    const passwordInput = screen.getByLabelText(/password/i);
+    fireEvent.change(emailInput, { target: { value: 'tm@blackout.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'tm' } });
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    await waitFor(() => expect(screen.getByText('NEW GAME')).toBeInTheDocument());
+
+    // Team Manager should NOT see Database in sidebar
+    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+
+    unmount();
+
+    // Test Player
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        user: { id: 'p1', role: 'Player', email: 'player@blackout.com' }
+      })
+    });
+
+    render(<App />);
+
+    const emailInput2 = screen.getByRole('textbox', { name: /email/i });
+    const passwordInput2 = screen.getByLabelText(/password/i);
+    fireEvent.change(emailInput2, { target: { value: 'player@blackout.com' } });
+    fireEvent.change(passwordInput2, { target: { value: 'player' } });
+    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    await waitFor(() => expect(screen.getByText('NEW GAME')).toBeInTheDocument());
+
+    // Player should NOT see Database in sidebar
+    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+  });
 });

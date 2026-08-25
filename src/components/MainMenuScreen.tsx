@@ -133,36 +133,18 @@ export default function MainMenuScreen({
         )}
       </div>
 
+      {/* Edge-to-edge Dashboard Banner */}
+      <div className="scorekeeper-banner relative w-full h-48 sm:h-56 md:h-64 lg:h-72 overflow-hidden flex items-center justify-center z-10 shrink-0">
+        <img
+          src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/kardinge2.png?v=1784547269"
+          alt="Dashboard Banner"
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+
       {/* Main Menu Content */}
       <div className="flex-1 w-full flex flex-col py-6 px-4 md:px-0 max-w-lg mx-auto z-10">
-
-        {/* Banner image with rounded edge fades in dark mode, clean reversed-color image in light mode */}
-        <div className="scorekeeper-banner relative w-full max-w-md mx-auto h-44 md:h-56 overflow-hidden flex items-center justify-center mb-6 rounded-lg">
-          <img
-            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/kardinge2.png?v=1784547269"
-            alt="Dashboard Banner"
-            className={`w-full h-full object-cover transition-all duration-300`}
-            style={
-              isDarkMode
-                ? {
-                    WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
-                  }
-                : {
-                    WebkitMaskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
-                    maskImage: 'radial-gradient(ellipse 95% 95% at 50% 50%, black 50%, transparent 100%)',
-                  }
-            }
-          />
-          {isDarkMode && (
-            <div
-              className="glassmorphism-overlay absolute inset-0 pointer-events-none"
-              style={{
-                background: 'radial-gradient(ellipse 90% 90% at 50% 50%, rgba(18, 20, 20, 0) 40%, rgba(18, 20, 20, 0.6) 80%, #121414 100%)'
-              }}
-            />
-          )}
-        </div>
 
         {/* Action Buttons & Info */}
         <div className="w-full flex flex-col gap-4">
@@ -244,49 +226,33 @@ export default function MainMenuScreen({
                 )}
               </div>
 
-              {/* Upcoming Games (Next 2 games) */}
+              {/* Upcoming Games */}
               <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
                 <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
                 {scheduledGames.length > 0 ? (
-                  scheduledGames.slice(0, 2).map(game => (
+                  scheduledGames.map(game => (
                     <button
                       key={game.id}
-                      onClick={() => onStartScheduledGame(game)}
-                      className="w-full text-left bg-surface-container-low hover:bg-white/5 border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group"
+                      onClick={() => isPlayerPlus && onStartScheduledGame(game)}
+                      disabled={!isPlayerPlus}
+                      className={`w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group ${
+                        isPlayerPlus ? 'hover:bg-white/5 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                      }`}
+                      title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
                     >
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white group-hover:text-tertiary transition-colors">{game.homeTeam} vs {game.awayTeam}</span>
+                        <span className={`text-sm font-bold ${isPlayerPlus ? 'text-white group-hover:text-tertiary' : 'text-gray-400'} transition-colors`}>{game.homeTeam} vs {game.awayTeam}</span>
                         <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.time} • {game.location}</span>
                       </div>
-                      <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {isPlayerPlus && (
+                        <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
                     </button>
                   ))
                 ) : (
                   <p className="text-sm text-gray-500 px-2">No upcoming games scheduled.</p>
                 )}
               </div>
-          {scheduledGames.length > 0 && (
-            <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
-              <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
-              {scheduledGames.map(game => (
-                <button
-                  key={game.id}
-                  onClick={() => isPlayerPlus && onStartScheduledGame(game)}
-                  disabled={!isPlayerPlus}
-                  className={`w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group ${
-                    isPlayerPlus ? 'hover:bg-white/5 cursor-pointer' : 'opacity-60 cursor-not-allowed'
-                  }`}
-                  title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
-                >
-                  <div className="flex flex-col">
-                    <span className={`text-sm font-bold ${isPlayerPlus ? 'text-white group-hover:text-tertiary' : 'text-gray-400'} transition-colors`}>{game.homeTeam} vs {game.awayTeam}</span>
-                    <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.time} • {game.location}</span>
-                  </div>
-                  {isPlayerPlus && (
-                    <Play className="w-4 h-4 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
-                </button>
-              ))}
             </div>
           )}
 

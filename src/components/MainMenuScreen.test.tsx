@@ -109,4 +109,18 @@ describe('MainMenuScreen', () => {
     fireEvent.click(gameButton);
     expect(mockProps.onStartScheduledGame).not.toHaveBeenCalled();
   });
+
+  it('renders edge-to-edge banner image without color inversion in light or dark mode', () => {
+    const { rerender } = render(<MainMenuScreen {...mockProps} isDarkMode={false} />);
+    const bannerImg = screen.getByAltText('Dashboard Banner');
+    expect(bannerImg).toBeInTheDocument();
+    expect(bannerImg).toHaveAttribute('src', 'https://cdn.shopify.com/s/files/1/1038/7203/7203/files/kardinge2.png?v=1784547269');
+    expect(bannerImg.parentElement).toHaveClass('scorekeeper-banner', 'w-full');
+
+    // Rerender with isDarkMode=true
+    rerender(<MainMenuScreen {...mockProps} isDarkMode={true} />);
+    const bannerImgDark = screen.getByAltText('Dashboard Banner');
+    expect(bannerImgDark).toBeInTheDocument();
+    expect(bannerImgDark.parentElement).toHaveClass('scorekeeper-banner', 'w-full');
+  });
 });

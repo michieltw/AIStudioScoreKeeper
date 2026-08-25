@@ -95,6 +95,7 @@ export interface PlayerEquipment {
   stickModel?: string;
   stickFlex?: string;
   stickCurve?: string;
+  stickPurchaseYear?: string;
   skateBrand?: string;
   helmetBrand?: string;
   retailer?: string;

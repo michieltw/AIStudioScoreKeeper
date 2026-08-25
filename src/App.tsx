@@ -68,7 +68,10 @@ export default function App() {
   const isLeagueManagerPlus = currentUser && ['Admin', 'League Manager'].includes(currentUser.role);
 
   const navigateTo = (screen: Screen) => {
-    if ((screen === 'database' || screen === 'settings' || screen === 'scorekeeper') && isGuest) {
+    if (screen === 'database' && !isLeagueManagerPlus) {
+      return;
+    }
+    if ((screen === 'settings' || screen === 'scorekeeper') && isGuest) {
       return;
     }
     if (screen === 'my-profile') setViewedPerson(null);
@@ -83,104 +86,129 @@ export default function App() {
   };
 
   const renderSidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#050505] text-on-surface-variant p-4 w-64 border-r border-[#2A2A2A]">
-      <div className="flex items-center justify-between mb-8">
+    <div className="flex flex-col h-full bg-[#050505] text-on-surface-variant p-4 w-80 sm:w-96 max-w-[92vw] border-r border-[#2A2A2A]">
+      <div className="flex items-center justify-between mb-6">
         <img
           src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/house_league.png?v=1783714846"
           alt="House League Logo"
           className="h-10 object-contain cursor-pointer"
           onClick={() => alert("Coming soon")}
         />
-        <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:text-white transition-colors">
+        <button 
+          onClick={() => setIsSidebarOpen(false)} 
+          className="p-1 rounded text-on-surface-variant hover:text-white hover:bg-white/5 transition-colors"
+          aria-label="Close sidebar"
+        >
           <X className="w-6 h-6" />
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto flex flex-col gap-2 font-mono text-[12px] font-bold tracking-widest uppercase">
-        <button onClick={() => navigateTo('main-menu')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'main-menu' ? 'bg-white/10 text-white' : ''}`}>
-          Dashboard
-        </button>
-        <button onClick={() => isPlayerPlus && handleNewGame()} disabled={!isPlayerPlus} className={`flex items-center gap-3 p-3 rounded transition-colors ${!isPlayerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'}`}>
-          New Game
-        </button>
-
-        <div className="my-2 border-t border-[#2A2A2A]"></div>
-
-        {!isGuest && (
-          <button onClick={() => navigateTo('database')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'database' ? 'bg-white/10 text-white' : ''}`}>
-            Database
+      <nav className="flex-1 overflow-y-auto font-mono text-[11px] sm:text-[12px] font-bold tracking-wider uppercase pr-1">
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => navigateTo('main-menu')} 
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'main-menu' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Dashboard
           </button>
-        )}
-        <button onClick={() => navigateTo('stats')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'stats' ? 'bg-white/10 text-white' : ''}`}>
-          Stats
-        </button>
-        <button onClick={() => isLeagueManagerPlus && navigateTo('ecosystem')} disabled={!isLeagueManagerPlus} className={`flex items-center gap-3 p-3 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'ecosystem' ? 'bg-white/10 text-white' : ''}`}>
-          Ecosystem
-        </button>
-        <button onClick={() => navigateTo('people-directory')} className={`flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white' : ''}`}>
-          People Directory
-        </button>
+          <button 
+            onClick={() => isPlayerPlus && handleNewGame()} 
+            disabled={!isPlayerPlus} 
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isPlayerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'}`}
+          >
+            New Game
+          </button>
 
-        <div className="my-2 border-t border-[#2A2A2A]"></div>
+          <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
 
-        <button
-          onClick={() => isTeamManagerPlus && navigateTo('team-profile')}
-          disabled={!isTeamManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'team-profile' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Teams
-        </button>
-        <button
-          onClick={() => isTeamManagerPlus && navigateTo('roster-builder')}
-          disabled={!isTeamManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'roster-builder' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Rosters
-        </button>
-        <button
-          onClick={() => isTeamManagerPlus && navigateTo('calendar')}
-          disabled={!isTeamManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'calendar' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Calendar
-        </button>
-        <button
-          onClick={() => isTeamManagerPlus && navigateTo('lineup-builder')}
-          disabled={!isTeamManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'lineup-builder' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Lineups
-        </button>
-
-        <div className="my-2 border-t border-[#2A2A2A]"></div>
-
-        <button
-          onClick={() => isLeagueManagerPlus && navigateTo('free-agency')}
-          disabled={!isLeagueManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'free-agency' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Free Agency
-        </button>
-        <button
-          onClick={() => isLeagueManagerPlus && navigateTo('draft-mode')}
-          disabled={!isLeagueManagerPlus}
-          className={`flex items-center gap-3 p-3 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'} ${currentScreen === 'draft-mode' ? 'bg-white/10 text-white' : ''}`}
-        >
-          Draft
-        </button>
-
-        {isLeagueManagerPlus && (
-          <>
-            <div className="my-2 border-t border-[#2A2A2A]"></div>
-            <button
-              onClick={() => navigateTo('setup-wizard')}
-              className={`flex items-center gap-3 p-3 rounded transition-colors hover:bg-white/5 ${currentScreen === 'setup-wizard' ? 'bg-white/10 text-white' : 'text-tertiary'}`}
+          {isLeagueManagerPlus && (
+            <button 
+              onClick={() => navigateTo('database')} 
+              className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'database' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
             >
-              Setup Wizard
+              Database
             </button>
-          </>
-        )}
+          )}
+          <button 
+            onClick={() => navigateTo('stats')} 
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'stats' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Stats
+          </button>
+          <button 
+            onClick={() => isLeagueManagerPlus && navigateTo('ecosystem')} 
+            disabled={!isLeagueManagerPlus} 
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'ecosystem' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Ecosystem
+          </button>
+          <button 
+            onClick={() => navigateTo('people-directory')} 
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            People Directory
+          </button>
 
+          <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
+
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('team-profile')}
+            disabled={!isTeamManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'team-profile' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Teams
+          </button>
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('roster-builder')}
+            disabled={!isTeamManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'roster-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Rosters
+          </button>
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('calendar')}
+            disabled={!isTeamManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'calendar' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Calendar
+          </button>
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('lineup-builder')}
+            disabled={!isTeamManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'lineup-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Lineups
+          </button>
+
+          <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
+
+          <button
+            onClick={() => isLeagueManagerPlus && navigateTo('free-agency')}
+            disabled={!isLeagueManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'free-agency' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Free Agency
+          </button>
+          <button
+            onClick={() => isLeagueManagerPlus && navigateTo('draft-mode')}
+            disabled={!isLeagueManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'draft-mode' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Draft
+          </button>
+
+          {isLeagueManagerPlus && (
+            <>
+              <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
+              <button
+                onClick={() => navigateTo('setup-wizard')}
+                className={`col-span-2 flex items-center justify-start p-2.5 rounded transition-colors hover:bg-white/5 ${currentScreen === 'setup-wizard' ? 'bg-white/10 text-white border border-white/20' : 'text-tertiary border border-transparent'}`}
+              >
+                Setup Wizard
+              </button>
+            </>
+          )}
+        </div>
       </nav>
 
       <div className="mt-4 pt-4 border-t border-[#2A2A2A]">
@@ -332,13 +360,13 @@ export default function App() {
               )}
 
               {currentScreen === 'database' && (
-                !isGuest ? (
+                isLeagueManagerPlus ? (
                   <DatabaseScreen onBack={() => setCurrentScreen('main-menu')} />
                 ) : (
                   <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
                     <h2 className="text-xl font-bold text-error font-display uppercase tracking-wider">Access Restricted</h2>
                     <p className="text-sm text-on-surface-variant max-w-md">
-                      Guest accounts are not authorized to view or edit database configuration. Please log in with an authorized account.
+                      You are not authorized to view or edit database configuration. Please log in with a League Manager or Admin account.
                     </p>
                     <button
                       onClick={() => setCurrentScreen('main-menu')}

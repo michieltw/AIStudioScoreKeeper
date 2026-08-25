@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal, Image as ImageIcon, Link as LinkIcon, X, Check, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { User, Achievement, Award } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
@@ -11,8 +11,9 @@ interface MyProfileScreenProps {
 }
 
 export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: MyProfileScreenProps) {
-  const isOwnProfile = !viewedPerson || (currentUser && viewedPerson.id === currentUser.personId);
-  const personId = viewedPerson?.id || currentUser?.personId;
+  const isOwnProfile = !viewedPerson || !currentUser || (viewedPerson && (viewedPerson.id === currentUser.personId || viewedPerson.id === currentUser.id));
+  const canEditPhotos = true; // Always allow changing profile photo and banner on profile view
+  const personId = viewedPerson?.id || currentUser?.personId || currentUser?.id || 'person-1';
   const [activeTab, setActiveTab] = useState<'about' | 'jobs' | 'equipment' | 'events' | 'achievements'>('about');
 
   const [profileData, setProfileData] = useState<any>(null);
@@ -26,6 +27,20 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
   const [editEquipmentForm, setEditEquipmentForm] = useState<any>({});
 
   const [jobsData, setJobsData] = useState<any[]>([]);
+
+  // Photo & Banner Modal State
+  const [photoModal, setPhotoModal] = useState<{
+    isOpen: boolean;
+    type: 'profile' | 'cover';
+    url: string;
+  }>({
+    isOpen: false,
+    type: 'profile',
+    url: ''
+  });
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState(false);
 
   const [rsvps, setRsvps] = useState<Record<string, string>>({
     'evt-1': 'Maybe',
@@ -75,10 +90,40 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         playerEq.forEach((row: any[]) => {
           const type = row[2]; // equipment_type
           const brand = row[3]; // brand_id
+          const serial = row[4]; // serial_number
+          const purchaseDate = row[5]; // purchase_date
           const notes = row[9]; // notes, using notes as model/details for simplicity
           eqMap[`${type}Brand`] = brand;
           eqMap[`${type}Model`] = notes;
           eqIdMap[`${type}Id`] = row[0]; // id
+
+          if (type === 'stick') {
+            let modelVal = notes || '';
+            let curveVal = '';
+            let flexVal = '';
+            let purchaseYearVal = purchaseDate ? String(purchaseDate).substring(0, 4) : '';
+
+            if (notes) {
+              try {
+                const parsed = JSON.parse(notes);
+                if (parsed && typeof parsed === 'object') {
+                  modelVal = parsed.model || '';
+                  curveVal = parsed.curve || '';
+                  flexVal = parsed.flex || '';
+                  if (parsed.purchaseYear) purchaseYearVal = String(parsed.purchaseYear);
+                }
+              } catch (e) {
+                modelVal = notes;
+              }
+            }
+            if (!purchaseYearVal && purchaseDate) {
+              purchaseYearVal = String(purchaseDate).substring(0, 4);
+            }
+            eqMap.stickModel = modelVal;
+            eqMap.stickCurve = curveVal;
+            eqMap.stickFlex = flexVal;
+            eqMap.stickPurchaseYear = purchaseYearVal;
+          }
         });
         setEquipmentData({ ...eqMap, _ids: eqIdMap });
         setEditEquipmentForm(eqMap);
@@ -165,25 +210,44 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
     }
   };
 
-  const handleSaveEquipment = async (type: string, brand: string, model: string) => {
+  const handleSaveEquipment = async (type: string, data: any) => {
     if (!personId) return;
     setLoading(true);
     try {
       const url = getGasUrl();
       if (!url) throw new Error("No database URL set.");
 
-      // We will try to update an existing equipment row by its ID, if it exists, otherwise we update by personId which is risky for multiple equipments.
-      // Assuming our backend `updateRow` requires a unique ID.
-      // If we don't have an ID, we could generate one.
       let eqId = equipmentData?._ids?.[`${type}Id`];
       let idCol = 'id';
       let idVal = eqId;
 
       if (!eqId) {
-        // Just fallback to appending a new one using a pseudo action or just generating an ID
-        eqId = `eq-${Date.now()}`;
+        eqId = `eq-${Date.now()}-${type}`;
         idCol = 'id';
         idVal = eqId;
+      }
+
+      let brandVal = '';
+      let notesVal = '';
+      let purchaseDateVal = '';
+      let serialVal = '';
+
+      if (typeof data === 'object' && data !== null) {
+        brandVal = data.brand || '';
+        if (type === 'stick') {
+          purchaseDateVal = data.purchaseYear ? String(data.purchaseYear) : '';
+          serialVal = `${data.curve || ''}${data.flex ? ` | ${data.flex} Flex` : ''}`.trim();
+          notesVal = JSON.stringify({
+            model: data.model || '',
+            curve: data.curve || '',
+            flex: data.flex || '',
+            purchaseYear: data.purchaseYear || ''
+          });
+        } else {
+          notesVal = data.model || '';
+        }
+      } else {
+        brandVal = data || '';
       }
 
       const res = await fetchGasData(url, {
@@ -194,8 +258,10 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         updateData: {
           person_id: personId,
           equipment_type: type,
-          brand_id: brand,
-          notes: model // using notes for model as per simplification
+          brand_id: brandVal,
+          purchase_date: purchaseDateVal,
+          serial_number: serialVal,
+          notes: notesVal
         }
       });
       const result = await res.json();
@@ -296,40 +362,64 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       }
   };
 
-  const handleEditPhoto = async (photoType: 'profile' | 'cover') => {
-    if (!personId) return;
-    const currentUrl = photoType === 'profile' ? profileData?.photo_url : profileData?.cover_url;
-    const newUrl = prompt("Enter the URL for the new photo:", currentUrl || '');
-    if (newUrl !== null) {
-      setLoading(true);
-      try {
-        const url = getGasUrl();
-        if (!url) throw new Error("No database URL set.");
+  const handleOpenPhotoModal = (type: 'profile' | 'cover') => {
+    const currentUrl = type === 'profile' ? profileData?.photo_url || '' : profileData?.cover_url || '';
+    setPhotoModal({
+      isOpen: true,
+      type,
+      url: currentUrl
+    });
+    setPhotoError(null);
+    setPreviewError(false);
+  };
 
-        const updateData: any = {};
-        if (photoType === 'profile') {
-          updateData.photo_url = newUrl;
-        } else {
-          updateData.cover_url = newUrl; // assuming cover_url exists in schema, otherwise might need a profile settings sheet
-        }
+  const handleSavePhoto = async (customUrl?: string) => {
+    if (!personId) {
+      setPhotoError("No person record identified for this profile.");
+      return;
+    }
+    setSavingPhoto(true);
+    setPhotoError(null);
+    try {
+      const url = getGasUrl();
+      if (!url) throw new Error("No database URL set. Please connect Google Apps Script in Settings.");
 
-        const res = await fetchGasData(url, {
-          action: 'updateRow',
-          sheetName: 'persons',
-          idColumn: 'id',
-          idValue: personId,
-          updateData
-        });
-        const result = await res.json();
-        if (result.status === 'Success') {
-          fetchData(true);
-        } else {
-          throw new Error(result.error || 'Failed to update photo');
-        }
-      } catch(e: any) {
-        setError(e.message);
-        setLoading(false);
+      const targetUrl = typeof customUrl === 'string' ? customUrl.trim() : photoModal.url.trim();
+      const isProfile = photoModal.type === 'profile';
+      const fieldKey = isProfile ? 'photo_url' : 'cover_url';
+
+      const updateData: Record<string, any> = {
+        [fieldKey]: targetUrl
+      };
+
+      // Populate basic names if creating row for the first time
+      if (!profileData?.first_name && currentUser) {
+        updateData.first_name = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'Player');
+        updateData.plays_position = 'Forward';
       }
+
+      const res = await fetchGasData(url, {
+        action: 'updateRow',
+        sheetName: 'persons',
+        idColumn: 'id',
+        idValue: personId,
+        updateData
+      });
+      const result = await res.json();
+      if (result.status === 'Success') {
+        setProfileData((prev: any) => ({
+          ...prev,
+          [fieldKey]: targetUrl
+        }));
+        setPhotoModal(prev => ({ ...prev, isOpen: false }));
+        fetchData(true);
+      } else {
+        throw new Error(result.error || 'Failed to update photo in database');
+      }
+    } catch(e: any) {
+      setPhotoError(e.message || 'Failed to update photo');
+    } finally {
+      setSavingPhoto(false);
     }
   };
 
@@ -379,21 +469,38 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto flex flex-col bg-background">
 
         {/* Cover Photo Area */}
-        <div className="relative w-full h-48 md:h-64 bg-surface-container-highest rounded-b-lg overflow-hidden group">
+        <div 
+          onClick={() => handleOpenPhotoModal('cover')}
+          className="relative w-full h-48 md:h-64 bg-surface-container-highest rounded-b-lg overflow-hidden group z-20 cursor-pointer"
+          title="Click to change banner image"
+        >
             {/* Cover Image or Placeholder Cover Gradient */}
             {profileData?.cover_url ? (
-               <img src={profileData.cover_url} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+               <img src={profileData.cover_url} alt="Cover" className="absolute inset-0 w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
                <div className="absolute inset-0 bg-gradient-to-tr from-surface-container-high to-tertiary/20"></div>
             )}
 
-            {isOwnProfile && (
+            {/* Hover overlay hint */}
+            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <span className="bg-black/80 text-white text-xs font-mono font-bold px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5 shadow-lg">
+                <Camera className="w-3.5 h-3.5 text-tertiary" /> Click to Change Banner
+              </span>
+            </div>
+
+            {canEditPhotos && (
                 <button
-                  onClick={() => handleEditPhoto('cover')}
-                  className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md flex items-center gap-2 text-sm font-bold transition-colors"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenPhotoModal('cover');
+                  }}
+                  className="absolute bottom-4 right-4 z-30 bg-black/80 hover:bg-black/95 text-white px-3.5 py-2 rounded-md flex items-center gap-2 text-sm font-bold transition-all border border-white/20 hover:border-tertiary/70 shadow-xl active:scale-95 cursor-pointer pointer-events-auto"
+                  title="Change Banner Image"
+                  aria-label="Change Banner Image"
                 >
-                    <Camera className="w-4 h-4" />
-                    <span className="hidden md:inline">Edit cover photo</span>
+                    <Camera className="w-4 h-4 text-tertiary" />
+                    <span className="inline">Change Banner</span>
                 </button>
             )}
         </div>
@@ -403,18 +510,33 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             <div className="flex flex-col md:flex-row md:items-end justify-between">
 
                 {/* Profile Pic & Name */}
-                <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 md:-mt-16 relative z-10">
+                <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 md:-mt-16 relative z-20">
                     {/* Profile Picture */}
-                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-surface-container-highest flex items-center justify-center shrink-0 mx-auto md:mx-0 overflow-hidden">
+                    <div 
+                      onClick={() => handleOpenPhotoModal('profile')}
+                      className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-surface-container-highest flex items-center justify-center shrink-0 mx-auto md:mx-0 overflow-hidden shadow-2xl cursor-pointer group/avatar"
+                      title="Click to change profile picture"
+                    >
                         <img
                             src={profileData?.photo_url || "https://cdn.shopify.com/s/files/1/1038/7203/7203/files/placeholder_profile_player_male.png?v=1784405789"}
                             alt="Profile"
                             className="w-full h-full object-cover rounded-full"
+                            referrerPolicy="no-referrer"
                         />
-                        {isOwnProfile && (
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center rounded-full pointer-events-none">
+                          <Camera className="w-6 h-6 text-white" />
+                        </div>
+                        {canEditPhotos && (
                             <button
-                              onClick={() => handleEditPhoto('profile')}
-                              className="absolute bottom-2 right-2 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest p-2 rounded-full text-white transition-colors shadow-lg"
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenPhotoModal('profile');
+                              }}
+                              className="absolute bottom-2 right-2 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary p-2 rounded-full text-tertiary transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto"
+                              title="Change Profile Picture"
+                              aria-label="Change Profile Picture"
                             >
                                 <Camera className="w-4 h-4" />
                             </button>
@@ -668,55 +790,160 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                 )}
                             </div>
                             {!isEditingEquipment ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-gray-400">Stick Brand</span>
-                                        <span className="text-white font-bold">{equipmentData?.stickBrand || "Bauer"}</span>
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Specifications</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Stick Brand</span>
+                                                <span className="text-white font-bold">{equipmentData?.stickBrand || "Bauer"}</span>
+                                            </div>
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Stick Model</span>
+                                                <span className="text-white font-bold">{equipmentData?.stickModel || "Nexus Sync"}</span>
+                                            </div>
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Blade Curve</span>
+                                                <span className="text-white font-bold">{equipmentData?.stickCurve || "P92"}</span>
+                                            </div>
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Flex</span>
+                                                <span className="text-white font-bold">{equipmentData?.stickFlex ? `${equipmentData.stickFlex} Flex` : "87 Flex"}</span>
+                                            </div>
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Year Purchased</span>
+                                                <span className="text-white font-bold">{equipmentData?.stickPurchaseYear || "2023"}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-gray-400">Stick Model</span>
-                                        <span className="text-white font-bold">{equipmentData?.stickModel || "Nexus Sync"}</span>
-                                    </div>
-                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-gray-400">Skate Brand</span>
-                                        <span className="text-white font-bold">{equipmentData?.skateBrand || "CCM"}</span>
-                                    </div>
-                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                        <span className="text-xs text-gray-400">Helmet Brand</span>
-                                        <span className="text-white font-bold">{equipmentData?.helmetBrand || "Warrior"}</span>
+
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Skate Brand</span>
+                                                <span className="text-white font-bold">{equipmentData?.skateBrand || "CCM"}</span>
+                                            </div>
+                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                                <span className="text-xs text-gray-400">Helmet Brand</span>
+                                                <span className="text-white font-bold">{equipmentData?.helmetBrand || "Warrior"}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col gap-3">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs text-gray-400">Stick Brand</label>
-                                            <input type="text" value={editEquipmentForm.stickBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, stickBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs text-gray-400">Stick Model</label>
-                                            <input type="text" value={editEquipmentForm.stickModel || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, stickModel: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs text-gray-400">Skate Brand</label>
-                                            <input type="text" value={editEquipmentForm.skateBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, skateBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="text-xs text-gray-400">Helmet Brand</label>
-                                            <input type="text" value={editEquipmentForm.helmetBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, helmetBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-3">
+                                        <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Details</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Stick Brand</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. Bauer, CCM, True"
+                                                  value={editEquipmentForm.stickBrand || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickBrand: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Stick Model</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. Nexus Sync, Hyperlite 2"
+                                                  value={editEquipmentForm.stickModel || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickModel: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Blade Curve</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. P92, P28, P88, W03"
+                                                  value={editEquipmentForm.stickCurve || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickCurve: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Flex</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. 77, 85, 87, 95"
+                                                  value={editEquipmentForm.stickFlex || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickFlex: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Year Purchased</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. 2024, 2023"
+                                                  value={editEquipmentForm.stickPurchaseYear || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickPurchaseYear: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
+
+                                    <div className="flex flex-col gap-3">
+                                        <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Skate Brand</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. CCM, Bauer, True"
+                                                  value={editEquipmentForm.skateBrand || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, skateBrand: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-xs text-gray-400">Helmet Brand</label>
+                                                <input
+                                                  type="text"
+                                                  placeholder="e.g. Warrior, Bauer, CCM"
+                                                  value={editEquipmentForm.helmetBrand || ''}
+                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, helmetBrand: e.target.value})}
+                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="flex gap-2 mt-2">
                                         <button
                                           onClick={async () => {
-                                              await handleSaveEquipment('stick', editEquipmentForm.stickBrand, editEquipmentForm.stickModel);
-                                              await handleSaveEquipment('skate', editEquipmentForm.skateBrand, editEquipmentForm.skateModel);
-                                              await handleSaveEquipment('helmet', editEquipmentForm.helmetBrand, editEquipmentForm.helmetModel);
+                                              await handleSaveEquipment('stick', {
+                                                  brand: editEquipmentForm.stickBrand,
+                                                  model: editEquipmentForm.stickModel,
+                                                  curve: editEquipmentForm.stickCurve,
+                                                  flex: editEquipmentForm.stickFlex,
+                                                  purchaseYear: editEquipmentForm.stickPurchaseYear,
+                                              });
+                                              await handleSaveEquipment('skate', {
+                                                  brand: editEquipmentForm.skateBrand,
+                                                  model: editEquipmentForm.skateModel,
+                                              });
+                                              await handleSaveEquipment('helmet', {
+                                                  brand: editEquipmentForm.helmetBrand,
+                                                  model: editEquipmentForm.helmetModel,
+                                              });
                                               setIsEditingEquipment(false);
                                           }}
-                                          className="bg-tertiary text-black flex-1 py-1.5 rounded-md font-bold"
+                                          className="bg-tertiary text-black flex-1 py-2 rounded-md font-bold text-sm tracking-wide uppercase font-mono"
                                         >
                                             Save All Equipment
+                                        </button>
+                                        <button
+                                          onClick={() => setIsEditingEquipment(false)}
+                                          className="bg-surface-container-highest text-white px-4 py-2 rounded-md text-sm font-mono uppercase"
+                                        >
+                                            Cancel
                                         </button>
                                     </div>
                                 </div>
@@ -794,6 +1021,203 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             </div>
         </div>
       </div>
+
+      {/* Photo & Banner Image Modal */}
+      {photoModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 pointer-events-auto">
+          <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] relative z-[10000]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white font-display">
+                    {photoModal.type === 'profile' ? 'Change Profile Picture' : 'Change Banner Image'}
+                  </h2>
+                  <p className="text-xs text-on-surface-variant">
+                    {photoModal.type === 'profile' 
+                      ? 'Specify the image URL for your profile avatar' 
+                      : 'Specify the image URL for your header banner'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPhotoModal(prev => ({ ...prev, isOpen: false }))}
+                disabled={savingPhoto}
+                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
+              
+              {/* URL Input */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">
+                  Image Web URL
+                </label>
+                <div className="relative">
+                  <LinkIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="url"
+                    value={photoModal.url}
+                    onChange={(e) => {
+                      setPhotoModal(prev => ({ ...prev, url: e.target.value }));
+                      setPreviewError(false);
+                      setPhotoError(null);
+                    }}
+                    placeholder={photoModal.type === 'profile' ? 'https://example.com/avatar.jpg' : 'https://example.com/banner.jpg'}
+                    className="w-full bg-[#050505] border border-[#2A2A2A] rounded-lg pl-9 pr-9 py-2.5 text-sm text-white focus:outline-none focus:border-tertiary transition-colors font-mono"
+                    autoFocus
+                  />
+                  {photoModal.url && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoModal(prev => ({ ...prev, url: '' }));
+                        setPreviewError(false);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                      title="Clear URL"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Preview Frame */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-tertiary" />
+                  Live Preview
+                </span>
+
+                <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden">
+                  {photoModal.url ? (
+                    photoModal.type === 'profile' ? (
+                      <div className="relative flex flex-col items-center">
+                        <div className="relative w-28 h-28 rounded-full border-2 border-tertiary/70 overflow-hidden shadow-xl bg-surface-container-high">
+                          <img
+                            src={photoModal.url}
+                            alt="Profile Preview"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => setPreviewError(true)}
+                            onLoad={() => setPreviewError(false)}
+                          />
+                        </div>
+                        {previewError ? (
+                          <div className="flex items-center gap-1.5 text-xs text-error mt-2">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Unable to load image from URL (check link)</span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-tertiary font-mono mt-2 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Valid image preview
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full flex flex-col items-center">
+                        <div className="relative w-full h-32 rounded-lg border border-tertiary/50 overflow-hidden bg-surface-container-high shadow-lg">
+                          <img
+                            src={photoModal.url}
+                            alt="Banner Preview"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => setPreviewError(true)}
+                            onLoad={() => setPreviewError(false)}
+                          />
+                        </div>
+                        {previewError ? (
+                          <div className="flex items-center gap-1.5 text-xs text-error mt-2">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Unable to load image from URL (check link)</span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-tertiary font-mono mt-2 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Valid banner preview
+                          </span>
+                        )}
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center p-4 text-gray-500">
+                      <ImageIcon className="w-10 h-10 mb-2 opacity-40" />
+                      <p className="text-xs font-medium">Enter an image URL above</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Error Banner */}
+              {photoError && (
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="flex-1">{photoError}</div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#2A2A2A] bg-surface-container-low flex items-center justify-between gap-3">
+              {photoModal.url ? (
+                <button
+                  type="button"
+                  onClick={() => handleSavePhoto('')}
+                  disabled={savingPhoto}
+                  className="px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-1.5 font-medium disabled:opacity-50"
+                  title="Remove image and reset to default"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Remove Image</span>
+                </button>
+              ) : (
+                <div />
+              )}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPhotoModal(prev => ({ ...prev, isOpen: false }))}
+                  disabled={savingPhoto}
+                  className="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-white bg-surface-container-high hover:bg-surface-container-highest rounded-lg transition-colors border border-[#2A2A2A]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSavePhoto()}
+                  disabled={savingPhoto}
+                  className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {savingPhoto ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
