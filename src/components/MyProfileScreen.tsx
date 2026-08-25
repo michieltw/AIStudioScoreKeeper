@@ -436,7 +436,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto justify-center md:justify-end gap-2 mt-4 md:mb-2 md:mt-0">
                     {isOwnProfile ? (
                         <>
-                            <button className="bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto">
+                            <button onClick={() => alert('Story feature coming soon!')} className="bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto">
                                 <Plus className="w-4 h-4" /> Add to Story
                             </button>
                             <button
@@ -448,13 +448,13 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                         </>
                     ) : (
                         <div className="flex gap-2 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                            <button onClick={() => alert(`You are now following ${displayName}`)} className="flex-1 sm:flex-none bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
                                 <UserPlus className="w-4 h-4" /> Follow
                             </button>
-                            <button className="flex-1 sm:flex-none bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                            <button onClick={() => alert(`Opening chat with ${displayName}...`)} className="flex-1 sm:flex-none bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
                                 <MessageCircle className="w-4 h-4" /> Message
                             </button>
-                            <button className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-3 py-2 rounded-md transition-colors">
+                            <button onClick={() => alert('More options coming soon!')} className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-3 py-2 rounded-md transition-colors">
                                 <MoreHorizontal className="w-5 h-5" />
                             </button>
                         </div>
