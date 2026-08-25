@@ -1,0 +1,8 @@
+{
+  "name": "IdeaForHockeyGame",
+  "description": "Hockey game scorekeeper, roster management, draft, and league administration platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
