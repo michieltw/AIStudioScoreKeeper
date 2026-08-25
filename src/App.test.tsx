@@ -84,8 +84,8 @@ describe('App Routing', () => {
       expect(btn).toBeDisabled();
     });
 
-    // Database button is not present in sidebar for guests
-    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+    // Database button is present in sidebar for guests but is disabled
+    expect(screen.getByRole('button', { name: /^Database$/i })).toBeDisabled();
   });
 
   it('restricts player and team manager from viewing database', async () => {
@@ -108,8 +108,8 @@ describe('App Routing', () => {
 
     await waitFor(() => expect(screen.getByText('NEW GAME')).toBeInTheDocument());
 
-    // Team Manager should NOT see Database in sidebar
-    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+    // Team Manager should see Database disabled in sidebar
+    expect(screen.getByRole('button', { name: /^Database$/i })).toBeDisabled();
 
     unmount();
 
@@ -132,7 +132,7 @@ describe('App Routing', () => {
 
     await waitFor(() => expect(screen.getByText('NEW GAME')).toBeInTheDocument());
 
-    // Player should NOT see Database in sidebar
-    expect(screen.queryByRole('button', { name: /^Database$/i })).not.toBeInTheDocument();
+    // Player should see Database disabled in sidebar
+    expect(screen.getByRole('button', { name: /^Database$/i })).toBeDisabled();
   });
 });

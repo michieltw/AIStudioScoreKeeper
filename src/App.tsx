@@ -105,6 +105,7 @@ export default function App() {
 
       <nav className="flex-1 overflow-y-auto font-mono text-[11px] sm:text-[12px] font-bold tracking-wider uppercase pr-1">
         <div className="grid grid-cols-2 gap-2">
+          {/* Section 1 */}
           <button 
             onClick={() => navigateTo('main-menu')} 
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'main-menu' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
@@ -116,19 +117,24 @@ export default function App() {
             disabled={!isPlayerPlus} 
             className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isPlayerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'}`}
           >
-            New Game
+            Scorekeeper
           </button>
 
           <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
 
-          {isLeagueManagerPlus && (
-            <button 
-              onClick={() => navigateTo('database')} 
-              className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'database' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
-            >
-              Database
-            </button>
-          )}
+          {/* Section 2 */}
+          <button
+            onClick={() => navigateTo('scores')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'scores' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Scores
+          </button>
+          <button
+            onClick={() => navigateTo('calendar')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'calendar' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Schedule
+          </button>
           <button 
             onClick={() => navigateTo('stats')} 
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'stats' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
@@ -136,21 +142,33 @@ export default function App() {
             Stats
           </button>
           <button 
-            onClick={() => isLeagueManagerPlus && navigateTo('ecosystem')} 
-            disabled={!isLeagueManagerPlus} 
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'ecosystem' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+            onClick={() => navigateTo('standings')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'standings' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
-            Ecosystem
+            Standings
           </button>
           <button 
-            onClick={() => navigateTo('people-directory')} 
-            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+            onClick={() => navigateTo('rulebook')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'rulebook' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
-            People Directory
+            Rulebook
+          </button>
+          <button
+            onClick={() => navigateTo('more')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'more' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            More
           </button>
 
           <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
 
+          {/* Section 3 */}
+          <button
+            onClick={() => navigateTo('players')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'players' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Players
+          </button>
           <button
             onClick={() => isTeamManagerPlus && navigateTo('team-profile')}
             disabled={!isTeamManagerPlus}
@@ -158,30 +176,10 @@ export default function App() {
           >
             Teams
           </button>
-          <button
-            onClick={() => isTeamManagerPlus && navigateTo('roster-builder')}
-            disabled={!isTeamManagerPlus}
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'roster-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
-          >
-            Rosters
-          </button>
-          <button
-            onClick={() => isTeamManagerPlus && navigateTo('calendar')}
-            disabled={!isTeamManagerPlus}
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'calendar' ? 'bg-white/10 text-white border border-white/20' : ''}`}
-          >
-            Calendar
-          </button>
-          <button
-            onClick={() => isTeamManagerPlus && navigateTo('lineup-builder')}
-            disabled={!isTeamManagerPlus}
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'lineup-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
-          >
-            Lineups
-          </button>
 
           <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
 
+          {/* Section 4 */}
           <button
             onClick={() => isLeagueManagerPlus && navigateTo('free-agency')}
             disabled={!isLeagueManagerPlus}
@@ -197,17 +195,71 @@ export default function App() {
             Draft
           </button>
 
-          {isLeagueManagerPlus && (
-            <>
-              <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
-              <button
-                onClick={() => navigateTo('setup-wizard')}
-                className={`col-span-2 flex items-center justify-start p-2.5 rounded transition-colors hover:bg-white/5 ${currentScreen === 'setup-wizard' ? 'bg-white/10 text-white border border-white/20' : 'text-tertiary border border-transparent'}`}
-              >
-                Setup Wizard
-              </button>
-            </>
+          <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
+
+          {/* Section 5 */}
+          {isLeagueManagerPlus ? (
+            <button
+              onClick={() => navigateTo('setup-wizard')}
+              className={`flex items-center justify-start p-2.5 rounded transition-colors hover:bg-white/5 ${currentScreen === 'setup-wizard' ? 'bg-white/10 text-white border border-white/20' : 'text-tertiary border border-transparent'}`}
+            >
+              Setup Wizard
+            </button>
+          ) : (
+            <button
+              disabled
+              className={`flex items-center justify-start p-2.5 rounded transition-colors opacity-50 cursor-not-allowed border border-transparent text-tertiary border border-transparent`}
+            >
+              Setup Wizard
+            </button>
           )}
+          <button
+            onClick={() => navigateTo('database')}
+            disabled={!isLeagueManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'database' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Database
+          </button>
+          <button
+            onClick={() => isLeagueManagerPlus && navigateTo('ecosystem')}
+            disabled={!isLeagueManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'ecosystem' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Ecosystem
+          </button>
+          <button
+            onClick={() => navigateTo('people-directory')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            People Directory
+          </button>
+
+          <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
+
+          {/* Section 6 */}
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('my-team')}
+            disabled={!isTeamManagerPlus}
+            className={`col-span-2 flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'my-team' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            <img src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/house_league.png?v=1783714846" alt="Team Logo" className={`h-6 w-6 object-contain mr-2 ${!isTeamManagerPlus ? 'opacity-50' : ''}`} />
+            My Team
+          </button>
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('roster-builder')}
+            disabled={!isTeamManagerPlus}
+            className={`col-span-2 flex items-center justify-start p-2.5 pl-10 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'roster-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Rosters
+          </button>
+          <button
+            onClick={() => isTeamManagerPlus && navigateTo('lineup-builder')}
+            disabled={!isTeamManagerPlus}
+            className={`col-span-2 flex items-center justify-start p-2.5 pl-10 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'lineup-builder' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+          >
+            Lineups
+          </button>
+
         </div>
       </nav>
 
@@ -414,6 +466,22 @@ export default function App() {
               )}
 
               {currentScreen === 'setup-wizard' && <SetupWizardScreen onCancel={() => setCurrentScreen('main-menu')} onFinish={() => setCurrentScreen('main-menu')} />}
+
+              {/* Placeholder for new screens */}
+              {['scores', 'standings', 'rulebook', 'more', 'players', 'my-team'].includes(currentScreen) && (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
+                  <h2 className="text-xl font-bold text-tertiary font-display uppercase tracking-wider">Coming Soon</h2>
+                  <p className="text-sm text-on-surface-variant max-w-md">
+                    The {currentScreen.replace('-', ' ')} feature is currently under development. Please check back later.
+                  </p>
+                  <button
+                    onClick={() => setCurrentScreen('main-menu')}
+                    className="bg-surface-container text-white hover:bg-white/10 transition-colors font-bold px-4 py-2 rounded font-mono text-xs uppercase"
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </>
