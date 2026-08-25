@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal } from 'lucide-react';
 import { User, Achievement, Award } from '../types';
+import { getGasUrl } from '../utils/gasUrl';
+import { fetchGasData } from '../utils/fetchGas';
 
 interface MyProfileScreenProps {
   viewedPerson?: any;
@@ -10,12 +12,90 @@ interface MyProfileScreenProps {
 
 export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: MyProfileScreenProps) {
   const isOwnProfile = !viewedPerson || (currentUser && viewedPerson.id === currentUser.personId);
-  const displayName = viewedPerson ? viewedPerson.name : (currentUser?.email || "My Profile");
+  const personId = viewedPerson?.id || currentUser?.personId;
   const [activeTab, setActiveTab] = useState<'about' | 'jobs' | 'equipment' | 'events' | 'achievements'>('about');
+
+  const [profileData, setProfileData] = useState<any>(null);
+  const [equipmentData, setEquipmentData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingEquipment, setIsEditingEquipment] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState<any>({});
+  const [editEquipmentForm, setEditEquipmentForm] = useState<any>({});
+
   const [rsvps, setRsvps] = useState<Record<string, string>>({
     'evt-1': 'Maybe',
     'evt-2': 'Attending'
   });
+
+  const fetchData = async (forceRefresh = false) => {
+    if (!personId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const url = getGasUrl();
+      if (!url) {
+        throw new Error("No database URL set.");
+      }
+
+      // Fetch person data
+      const personsRes = await fetchGasData(url, { action: 'getEcosystemData', sheetName: 'persons' }, forceRefresh);
+      const personsResult = await personsRes.json();
+      if (personsResult.status === 'Success') {
+        const headers = personsResult.data[0];
+        const rows = personsResult.data.slice(1);
+        const personRow = rows.find((r: any[]) => r[0] === personId);
+        if (personRow) {
+          const mappedPerson = headers.reduce((acc: any, curr: string, idx: number) => {
+            acc[curr] = personRow[idx];
+            return acc;
+          }, {});
+          setProfileData(mappedPerson);
+          setEditProfileForm(mappedPerson);
+        }
+      }
+
+      // Fetch equipment data
+      const eqRes = await fetchGasData(url, { action: 'getEcosystemData', sheetName: 'player_equipment' }, forceRefresh);
+      const eqResult = await eqRes.json();
+      if (eqResult.status === 'Success') {
+        const eqHeaders = eqResult.data[0];
+        const eqRows = eqResult.data.slice(1);
+        // Note: equipment might be multiple rows, but we simplify by taking the first matched or map all.
+        // Let's assume one row per person for simplification, or filter by equipment_type
+        const playerEq = eqRows.filter((r: any[]) => r[1] === personId); // index 1 is person_id according to schema
+
+        // For UI simplicity, we map specific types
+        const eqMap: any = {};
+        let eqIdMap: any = {}; // store ids to allow updating
+        playerEq.forEach((row: any[]) => {
+          const type = row[2]; // equipment_type
+          const brand = row[3]; // brand_id
+          const notes = row[9]; // notes, using notes as model/details for simplicity
+          eqMap[`${type}Brand`] = brand;
+          eqMap[`${type}Model`] = notes;
+          eqIdMap[`${type}Id`] = row[0]; // id
+        });
+        setEquipmentData({ ...eqMap, _ids: eqIdMap });
+        setEditEquipmentForm(eqMap);
+      }
+
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [personId]);
+
+  const displayName = profileData
+    ? `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || viewedPerson?.name || currentUser?.email || "My Profile"
+    : (viewedPerson?.name || currentUser?.email || "My Profile");
 
   const dummyBadges: Achievement[] = [
     { id: 'b1', name: '100 Career Goals' },
@@ -32,8 +112,150 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
     { id: 'evt-2', title: 'Game vs Spartans', date: '2024-11-18 19:30' }
   ];
 
-  const handleRsvpChange = (eventId: string, status: string) => {
-    setRsvps(prev => ({ ...prev, [eventId]: status }));
+  const handleSaveProfile = async () => {
+    if (!personId) return;
+    setLoading(true);
+    try {
+      const url = getGasUrl();
+      if (!url) throw new Error("No database URL set.");
+
+      const res = await fetchGasData(url, {
+        action: 'updateRow',
+        sheetName: 'persons',
+        idColumn: 'id',
+        idValue: personId,
+        updateData: {
+          first_name: editProfileForm.first_name,
+          last_name: editProfileForm.last_name,
+          height_cm: editProfileForm.height_cm,
+          weight_kg: editProfileForm.weight_kg,
+          plays_position: editProfileForm.plays_position,
+          bio: editProfileForm.bio
+        }
+      });
+      const result = await res.json();
+      if (result.status === 'Success') {
+        setIsEditingProfile(false);
+        fetchData(true);
+      } else {
+        throw new Error(result.error || 'Failed to update profile');
+      }
+    } catch(e: any) {
+      setError(e.message);
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEquipment = async (type: string, brand: string, model: string) => {
+    if (!personId) return;
+    setLoading(true);
+    try {
+      const url = getGasUrl();
+      if (!url) throw new Error("No database URL set.");
+
+      // We will try to update an existing equipment row by its ID, if it exists, otherwise we update by personId which is risky for multiple equipments.
+      // Assuming our backend `updateRow` requires a unique ID.
+      // If we don't have an ID, we could generate one.
+      let eqId = equipmentData?._ids?.[`${type}Id`];
+      let idCol = 'id';
+      let idVal = eqId;
+
+      if (!eqId) {
+        // Just fallback to appending a new one using a pseudo action or just generating an ID
+        eqId = `eq-${Date.now()}`;
+        idCol = 'id';
+        idVal = eqId;
+      }
+
+      const res = await fetchGasData(url, {
+        action: 'updateRow',
+        sheetName: 'player_equipment',
+        idColumn: idCol,
+        idValue: idVal,
+        updateData: {
+          person_id: personId,
+          equipment_type: type,
+          brand_id: brand,
+          notes: model // using notes for model as per simplification
+        }
+      });
+      const result = await res.json();
+      if (result.status === 'Success') {
+        fetchData(true);
+      } else {
+        throw new Error(result.error || 'Failed to update equipment');
+      }
+    } catch(e: any) {
+      setError(e.message);
+      setLoading(false);
+    }
+  };
+
+  const handleEditPhoto = async (photoType: 'profile' | 'cover') => {
+    if (!personId) return;
+    const currentUrl = photoType === 'profile' ? profileData?.photo_url : profileData?.cover_url;
+    const newUrl = prompt("Enter the URL for the new photo:", currentUrl || '');
+    if (newUrl !== null) {
+      setLoading(true);
+      try {
+        const url = getGasUrl();
+        if (!url) throw new Error("No database URL set.");
+
+        const updateData: any = {};
+        if (photoType === 'profile') {
+          updateData.photo_url = newUrl;
+        } else {
+          updateData.cover_url = newUrl; // assuming cover_url exists in schema, otherwise might need a profile settings sheet
+        }
+
+        const res = await fetchGasData(url, {
+          action: 'updateRow',
+          sheetName: 'persons',
+          idColumn: 'id',
+          idValue: personId,
+          updateData
+        });
+        const result = await res.json();
+        if (result.status === 'Success') {
+          fetchData(true);
+        } else {
+          throw new Error(result.error || 'Failed to update photo');
+        }
+      } catch(e: any) {
+        setError(e.message);
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleRsvpChange = async (eventId: string, status: string) => {
+    setRsvps(prev => ({ ...prev, [eventId]: status })); // optimistic update
+
+    if (!personId) return;
+    try {
+        const url = getGasUrl();
+        if (!url) return;
+
+        // Find existing RSVP id for this event/person combination if any.
+        // For now, let's assume we can just use `updateRow` with a composite-like ID or we just save new.
+        // A proper implementation would need `id` from the fetch.
+        // Simplification: generate a unique ID based on person+event.
+        const rsvpId = `rsvp-${personId}-${eventId}`;
+
+        await fetchGasData(url, {
+            action: 'updateRow',
+            sheetName: 'event_rsvps',
+            idColumn: 'id',
+            idValue: rsvpId,
+            updateData: {
+                event_id: eventId,
+                person_id: personId,
+                rsvp_status: status
+            }
+        });
+    } catch(e: any) {
+        console.error("Failed to save RSVP", e);
+    }
   };
 
   return (
@@ -53,10 +275,18 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
         {/* Cover Photo Area */}
         <div className="relative w-full h-48 md:h-64 bg-surface-container-highest rounded-b-lg overflow-hidden group">
-            {/* Placeholder Cover Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-surface-container-high to-tertiary/20"></div>
+            {/* Cover Image or Placeholder Cover Gradient */}
+            {profileData?.cover_url ? (
+               <img src={profileData.cover_url} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+               <div className="absolute inset-0 bg-gradient-to-tr from-surface-container-high to-tertiary/20"></div>
+            )}
+
             {isOwnProfile && (
-                <button className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md flex items-center gap-2 text-sm font-bold transition-colors">
+                <button
+                  onClick={() => handleEditPhoto('cover')}
+                  className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-md flex items-center gap-2 text-sm font-bold transition-colors"
+                >
                     <Camera className="w-4 h-4" />
                     <span className="hidden md:inline">Edit cover photo</span>
                 </button>
@@ -70,14 +300,17 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 {/* Profile Pic & Name */}
                 <div className="flex flex-col md:flex-row md:items-end gap-4 -mt-12 md:-mt-16 relative z-10">
                     {/* Profile Picture */}
-                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-surface-container-highest flex items-center justify-center shrink-0 mx-auto md:mx-0">
+                    <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-background bg-surface-container-highest flex items-center justify-center shrink-0 mx-auto md:mx-0 overflow-hidden">
                         <img
-                            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/placeholder_profile_player_male.png?v=1784405789"
+                            src={profileData?.photo_url || "https://cdn.shopify.com/s/files/1/1038/7203/7203/files/placeholder_profile_player_male.png?v=1784405789"}
                             alt="Profile"
                             className="w-full h-full object-cover rounded-full"
                         />
                         {isOwnProfile && (
-                            <button className="absolute bottom-2 right-2 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest p-2 rounded-full text-white transition-colors shadow-lg">
+                            <button
+                              onClick={() => handleEditPhoto('profile')}
+                              className="absolute bottom-2 right-2 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest p-2 rounded-full text-white transition-colors shadow-lg"
+                            >
                                 <Camera className="w-4 h-4" />
                             </button>
                         )}
@@ -101,7 +334,10 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             <button className="bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto">
                                 <Plus className="w-4 h-4" /> Add to Story
                             </button>
-                            <button className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto">
+                            <button
+                              onClick={() => setIsEditingProfile(!isEditingProfile)}
+                              className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto"
+                            >
                                 <Edit2 className="w-4 h-4" /> Edit profile
                             </button>
                         </>
@@ -177,29 +413,79 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-sm">
                     <h3 className="text-white font-bold text-xl">Intro</h3>
 
-                    <div className="flex flex-col gap-3 text-sm">
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <Briefcase className="w-5 h-5 text-gray-400" />
-                            <span>Role: <strong className="text-white">{viewedPerson?.role || currentUser?.role || "User"}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <Ruler className="w-5 h-5 text-gray-400" />
-                            <span>Height: <strong className="text-white">{viewedPerson?.height || "6'1\""}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <div className="w-5 text-center font-bold text-gray-400">W</div>
-                            <span>Weight: <strong className="text-white">{viewedPerson?.weight || "190 lbs"}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <div className="w-5 text-center font-bold text-gray-400">H</div>
-                            <span>Shoots: <strong className="text-white">{viewedPerson?.handedness || "Right"}</strong></span>
-                        </div>
-                    </div>
+                    {!isEditingProfile ? (
+                        <>
+                            <div className="flex flex-col gap-3 text-sm">
+                                <div className="flex items-center gap-3 text-on-surface-variant">
+                                    <Briefcase className="w-5 h-5 text-gray-400" />
+                                    <span>Role: <strong className="text-white">{profileData?.plays_position || viewedPerson?.role || currentUser?.role || "User"}</strong></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-on-surface-variant">
+                                    <Ruler className="w-5 h-5 text-gray-400" />
+                                    <span>Height: <strong className="text-white">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height || "6'1\"")}</strong></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-on-surface-variant">
+                                    <div className="w-5 text-center font-bold text-gray-400">W</div>
+                                    <span>Weight: <strong className="text-white">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight || "190 lbs")}</strong></span>
+                                </div>
+                                <div className="flex items-center gap-3 text-on-surface-variant">
+                                    <div className="w-5 text-center font-bold text-gray-400">H</div>
+                                    <span>Shoots: <strong className="text-white">{viewedPerson?.handedness || "Right"}</strong></span>
+                                </div>
+                            </div>
 
-                    {isOwnProfile && (
-                        <button className="w-full py-1.5 bg-surface-container-highest hover:bg-surface-container-highest/80 border border-[#2A2A2A] rounded-md text-white font-bold text-sm transition-colors mt-2">
-                            Edit details
-                        </button>
+                            {isOwnProfile && (
+                                <button
+                                  onClick={() => setIsEditingProfile(true)}
+                                  className="w-full py-1.5 bg-surface-container-highest hover:bg-surface-container-highest/80 border border-[#2A2A2A] rounded-md text-white font-bold text-sm transition-colors mt-2"
+                                >
+                                    Edit details
+                                </button>
+                            )}
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-3 text-sm">
+                            <input
+                                type="text" placeholder="First Name"
+                                value={editProfileForm.first_name || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, first_name: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <input
+                                type="text" placeholder="Last Name"
+                                value={editProfileForm.last_name || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, last_name: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <input
+                                type="text" placeholder="Height (cm)"
+                                value={editProfileForm.height_cm || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, height_cm: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <input
+                                type="text" placeholder="Weight (kg)"
+                                value={editProfileForm.weight_kg || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, weight_kg: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <input
+                                type="text" placeholder="Position"
+                                value={editProfileForm.plays_position || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, plays_position: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <textarea
+                                placeholder="Bio"
+                                value={editProfileForm.bio || ''}
+                                onChange={e => setEditProfileForm({...editProfileForm, bio: e.target.value})}
+                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
+                            />
+                            <div className="flex gap-2">
+                                <button onClick={handleSaveProfile} className="bg-tertiary text-black flex-1 py-1.5 rounded-md font-bold">Save</button>
+                                <button onClick={() => setIsEditingProfile(false)} className="bg-surface-container-highest text-white flex-1 py-1.5 rounded-md">Cancel</button>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
@@ -210,11 +496,14 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                     {activeTab === 'about' && (
                         <div className="flex flex-col gap-4">
                             <h3 className="text-white font-bold text-xl mb-2">About</h3>
-                            <p className="text-on-surface-variant text-sm leading-relaxed">
-                                Welcome to {displayName}'s profile. This section can include bio information, favorite quotes, or a summary of their hockey career.
+                            <p className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
+                                {profileData?.bio || `Welcome to ${displayName}'s profile. This section can include bio information, favorite quotes, or a summary of their hockey career.`}
                             </p>
-                            {isOwnProfile && (
-                                <p className="text-tertiary text-sm mt-4 cursor-pointer hover:underline">
+                            {isOwnProfile && !profileData?.bio && (
+                                <p
+                                  className="text-tertiary text-sm mt-4 cursor-pointer hover:underline"
+                                  onClick={() => setIsEditingProfile(true)}
+                                >
                                     + Add bio
                                 </p>
                             )}
@@ -246,29 +535,68 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-white font-bold text-xl">Preferred Equipment</h3>
                                 {isOwnProfile && (
-                                    <button className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1">
-                                        <Edit2 className="w-4 h-4" /> Edit
+                                    <button
+                                      onClick={() => setIsEditingEquipment(!isEditingEquipment)}
+                                      className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1"
+                                    >
+                                        <Edit2 className="w-4 h-4" /> {isEditingEquipment ? 'Cancel' : 'Edit'}
                                     </button>
                                 )}
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                    <span className="text-xs text-gray-400">Stick Brand</span>
-                                    <span className="text-white font-bold">{viewedPerson?.equipment?.stickBrand || "Bauer"}</span>
+                            {!isEditingEquipment ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Stick Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickBrand || "Bauer"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Stick Model</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickModel || "Nexus Sync"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Skate Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.skateBrand || "CCM"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Helmet Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.helmetBrand || "Warrior"}</span>
+                                    </div>
                                 </div>
-                                <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                    <span className="text-xs text-gray-400">Stick Model</span>
-                                    <span className="text-white font-bold">{viewedPerson?.equipment?.stickModel || "Nexus Sync"}</span>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-400">Stick Brand</label>
+                                            <input type="text" value={editEquipmentForm.stickBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, stickBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-400">Stick Model</label>
+                                            <input type="text" value={editEquipmentForm.stickModel || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, stickModel: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-400">Skate Brand</label>
+                                            <input type="text" value={editEquipmentForm.skateBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, skateBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-xs text-gray-400">Helmet Brand</label>
+                                            <input type="text" value={editEquipmentForm.helmetBrand || ''} onChange={e => setEditEquipmentForm({...editEquipmentForm, helmetBrand: e.target.value})} className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 mt-2">
+                                        <button
+                                          onClick={async () => {
+                                              await handleSaveEquipment('stick', editEquipmentForm.stickBrand, editEquipmentForm.stickModel);
+                                              await handleSaveEquipment('skate', editEquipmentForm.skateBrand, editEquipmentForm.skateModel);
+                                              await handleSaveEquipment('helmet', editEquipmentForm.helmetBrand, editEquipmentForm.helmetModel);
+                                              setIsEditingEquipment(false);
+                                          }}
+                                          className="bg-tertiary text-black flex-1 py-1.5 rounded-md font-bold"
+                                        >
+                                            Save All Equipment
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                    <span className="text-xs text-gray-400">Skate Brand</span>
-                                    <span className="text-white font-bold">{viewedPerson?.equipment?.skateBrand || "CCM"}</span>
-                                </div>
-                                <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                    <span className="text-xs text-gray-400">Helmet Brand</span>
-                                    <span className="text-white font-bold">{viewedPerson?.equipment?.helmetBrand || "Warrior"}</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
