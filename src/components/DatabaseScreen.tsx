@@ -201,6 +201,150 @@ const generateGasCodeSnippet = (token: string) => `function setupSheet() {
     jobsSheet.appendRow(["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"]);
     jobsSheet.getRange("A1:H1").setFontWeight("bold");
   }
+
+
+  // ============================================================================
+  // DYNAMIC SCHEMA GENERATION (Merged from Google Sheet Tabs)
+  // ============================================================================
+  const enumLookups = {
+    // Identity & Roles
+    "user_role": ["admin", "league_manager", "team_manager", "coach", "player", "fan", "retailer", "sponsor"],
+    "job_type": ["head_coach", "assistant_coach", "goalie_coach", "general_manager", "assistant_gm", "trainer", "physiotherapist", "scout"],
+    "official_role": ["referee", "linesman", "timekeeper", "bench_official", "authorized_official"],
+
+    // Competition & Seasons
+    "competition_type": ["league", "tournament", "cup", "friendly_matches"],
+    "tier_type": ["E", "P", "SP", "A", "R", "Y"],
+    "season_phase_type": ["preseason", "regular", "playoff", "offseason"],
+    "draft_status": ["upcoming", "in_progress", "completed"],
+
+    // Teams & Rosters
+    "roster_status": ["open", "closed", "locked"],
+    "player_status": ["active", "injured", "suspended", "inactive", "retired", "on_loan"],
+    "season_role": ["primary", "backup", "call_up", "loan"],
+    "special_team_type": ["power_play", "penalty_kill", "even_strength"],
+
+    // Games & Events
+    "event_type": ["game", "practice", "scrimmage", "training", "friendly_match"],
+    "game_status": ["scheduled", "in_progress", "pre_game", "completed", "postponed", "cancelled"],
+    "rsvp_status": ["accepted", "declined", "tentative", "not_responded"],
+    "trigger_event_type": [
+      "goal_even_strength", "goal_penalty_shot", "goal_power_play_5v4", "goal_power_play_5v3",
+      "goal_shorthanded_4v5", "goal_shorthanded_3v5", "goal_empty_net", "shootout_goal",
+      "shootout_miss", "shot_on_goal", "penalty", "faceoff_won", "period_end", "period_start",
+      "game_start", "game_end", "offside", "icing", "timeout", "official_challenge",
+      "boarding_call", "other"
+    ],
+
+    // Player Equipment & Details
+    "equipment_type": ["stick", "skates", "helmet", "gloves", "pads", "jersey", "socks", "tape", "other"],
+    "stick_handedness": ["left", "right"],
+    "handedness": ["left", "right"],
+
+    // Commercial & Ecosystem
+    "sponsorship_level": ["gold", "silver", "bronze"],
+    "license_category": ["professional", "semi_pro", "recreational", "woman", "youth"],
+    "compliance_status": ["compliant", "pending_review", "non_compliant"],
+
+    // Profiles & Gamification
+    "visibility": ["public", "private", "unlisted"],
+    "achievement_category": ["scoring", "goaltending", "teamwork", "sportsmanship", "milestone", "seasonal_award"]
+  };
+
+  const dbSchema = {
+    // --- Identity & Roles ---
+    "users": ["id", "username", "email", "password_hash", "role", "display_name", "avatar_url", "bio", "active_from", "active_to", "created_at", "updated_at"],
+    "persons": ["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "bio", "created_at", "updated_at"],
+    "jobs": ["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"],
+    "players": ["id", "person_id", "handedness", "primary_position", "secondary_position", "active_from", "active_to", "created_at", "updated_at"],
+
+    // --- Ecosystem ---
+    "organizations": ["id", "name", "country", "founded_year", "logo_url", "website", "description", "active_from", "active_to", "created_at", "updated_at"],
+    "clubs": ["id", "organization_id", "name", "city", "country", "founded_year", "logo_url", "home_venue_id", "description", "active_from", "active_to", "created_at", "updated_at"],
+    "venues": ["id", "name", "city", "country", "capacity", "address", "website", "phone", "created_at", "updated_at"],
+    "organization_registrations": ["id", "organization_id", "federation_code", "federation_name", "license_type", "registration_date", "expiry_date", "is_active", "notes", "created_at", "updated_at"],
+    "club_licenses": ["id", "club_id", "license_type", "issued_date", "expiry_date", "is_active", "compliance_status", "notes", "created_at", "updated_at"],
+    "player_licenses": ["id", "person_id", "knhb_license_number", "license_category", "issued_date", "expiry_date", "is_active", "notes", "created_at", "updated_at"],
+
+    // --- Competition & Seasons ---
+    "tiers": ["id", "organization_id", "name", "tier_type", "level_rank", "parent_tier_id", "created_at", "updated_at"],
+    "competitions": ["id", "organization_id", "competition_code", "name", "competition_type", "tier_id", "start_date", "end_date", "description", "created_at", "updated_at"],
+    "seasons": ["id", "competition_id", "year", "start_date", "end_date", "created_at"],
+    "season_phases": ["id", "season_id", "phase_type", "start_date", "end_date", "description", "created_at"],
+    "playoff_brackets": ["id", "season_id", "name", "round_number", "created_at"],
+    "bracket_matchups": ["id", "bracket_id", "home_team_id", "away_team_id", "series_game_number", "winner_team_id", "created_at"],
+    "player_drafts": ["id", "season_id", "competition_id", "status", "draft_date", "notes", "created_at", "updated_at"],
+    "draft_picks": ["id", "draft_id", "pick_order", "team_id", "person_id", "round_number", "notes", "created_at"],
+
+    // --- Teams & Rosters ---
+    "teams": ["id", "club_id", "competition_id", "team_code", "name", "tier_id", "coach_id", "general_manager_id", "founded_year", "logo_url", "primary_color", "secondary_color", "description", "active_from", "active_to", "created_at", "updated_at"],
+    "rosters": ["id", "team_id", "season_id", "roster_name", "roster_status", "created_at", "updated_at"],
+    "roster_members": ["id", "roster_id", "person_id", "person_full_name", "jersey_number", "position", "status", "joined_at", "left_at", "created_at"],
+    "player_seasons": ["id", "person_id", "season_id", "primary_team_id", "season_role", "created_at", "updated_at"],
+    "free_agents": ["id", "person_id", "season_id", "available_from", "available_to", "asking_price_lower", "asking_price_upper", "notes", "created_at", "updated_at"],
+    "lineups": ["id", "game_id", "team_id", "lineup_name", "created_at"],
+    "lineup_slots": ["id", "lineup_id", "person_id", "line_number", "position", "created_at"],
+    "special_teams": ["id", "team_id", "season_id", "special_team_type", "name", "active_from", "active_to", "created_at"],
+    "special_team_members": ["id", "special_team_id", "person_id", "line_number", "position", "created_at"],
+
+    // --- Games & Events ---
+    "events": ["id", "team_id", "event_type", "scheduled_at", "venue_id", "notes", "created_at", "updated_at"],
+    "event_rsvps": ["id", "event_id", "person_id", "rsvp_status", "responded_at", "created_at"],
+    "games": ["id", "season_id", "home_team_id", "away_team_id", "venue_id", "scheduled_at", "started_at", "ended_at", "home_score", "away_score", "status", "attendance", "notes", "created_at", "updated_at"],
+    "game_officials": ["id", "game_id", "person_id", "official_role", "active_from", "active_to", "created_at"],
+    "penalty_types": ["id", "name", "is_active", "default_duration_minutes", "description", "created_at"],
+    "game_events": ["id", "game_id", "period", "time_elapsed", "time_left", "trigger_event_type", "trigger_team_id", "trigger_player_id", "first_assist_player_id", "second_assist_player_id", "penalty_type_id", "penalty_duration", "x_coordinate", "y_coordinate", "play_stoppage", "play_resumes", "description", "authorized_by", "created_at", "updated_at"],
+
+    // --- Stats ---
+    "player_stats": ["id", "season_id", "person_id", "team_id", "person_full_name", "team_name", "games_played", "goals", "assists", "points", "plus_minus", "penalties_in_minutes", "shots", "hits", "blocks", "created_at", "updated_at"],
+    "goalie_stats": ["id", "season_id", "person_id", "team_id", "person_full_name", "team_name", "games_played", "wins", "losses", "ties", "goals_against", "saves", "shots_against", "shutouts", "save_percentage", "goals_against_average", "created_at", "updated_at"],
+    "team_stats": ["id", "season_id", "team_id", "games_played", "wins", "losses", "ties", "goals_for", "goals_against", "created_at", "updated_at"],
+    "standings": ["id", "season_id", "tier_id", "team_id", "games_played", "wins", "losses", "ties", "points", "position", "updated_at"],
+
+    // --- Commercial & Equipment ---
+    "brands": ["id", "name", "country", "logo_url", "website", "description", "created_at"],
+    "retailers": ["id", "name", "website", "email", "phone", "country", "created_at"],
+    "sponsors": ["id", "name", "logo_url", "website", "email", "contact_person", "created_at", "updated_at"],
+    "team_sponsors": ["id", "team_id", "sponsor_id", "season_id", "sponsorship_level", "amount_usd", "started_at", "ended_at", "created_at"],
+    "player_equipment": ["id", "person_id", "equipment_type", "brand_id", "serial_number", "purchase_date", "active_from", "active_to", "condition", "notes", "created_at", "updated_at"],
+    "sticks": ["id", "person_id", "player_profile_id", "brand_id", "model", "handedness", "flex_rating", "curve_type", "length_inches", "material", "purchase_date", "active_from", "active_to", "notes", "created_at", "updated_at"],
+
+    // --- Profiles & Gamification ---
+    "player_profiles": ["id", "person_id", "user_id", "bio", "career_highlights", "achievements_summary", "profile_url", "visibility", "is_published", "featured_badge_id", "featured_award_id", "total_equipment", "total_badges", "total_awards", "created_at", "updated_at"],
+    "team_profiles": ["id", "team_id", "description", "history", "recent_achievements", "profile_url", "visibility", "is_published", "created_at", "updated_at"],
+    "division_profiles": ["id", "tier_id", "description", "rules_summary", "profile_url", "visibility", "is_published", "created_at", "updated_at"],
+    "league_profiles": ["id", "competition_id", "description", "rules_summary", "history", "profile_url", "visibility", "is_published", "created_at", "updated_at"],
+    "achievements": ["id", "name", "description", "icon_url", "category", "criteria_description", "points_reward", "created_at"],
+    "user_achievements": ["id", "user_id", "achievement_id", "awarded_at", "notes", "created_at"],
+    "badges": ["id", "name", "description", "icon_url", "tier", "created_at"],
+    "user_badges": ["id", "user_id", "badge_id", "earned_at", "created_at"],
+    "seasonal_awards": ["id", "season_id", "award_name", "category", "person_id", "team_id", "description", "award_order", "created_at", "updated_at"],
+    "player_awards": ["id", "season_id", "person_id", "game_id", "award_type", "description", "awarded_at", "created_at"]
+  };
+
+  for (const sheetName in dbSchema) {
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(dbSchema[sheetName]);
+      sheet.getRange(1, 1, 1, dbSchema[sheetName].length).setFontWeight("bold");
+    } else {
+      // If the sheet already exists, we could check if columns match, but for now we leave existing code
+      // We don't remove existing code, just merge in missing ones.
+    }
+  }
+
+  for (const enumName in enumLookups) {
+    const sheetName = "enum_" + enumName;
+    let sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.appendRow(["Value"]);
+      sheet.getRange(1, 1, 1, 1).setFontWeight("bold");
+      const values = enumLookups[enumName];
+      values.forEach(val => sheet.appendRow([val]));
+    }
+  }
 }
 
 function calculateStandingsAndStats() {
