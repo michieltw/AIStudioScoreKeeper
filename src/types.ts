@@ -152,6 +152,15 @@ export interface EcosystemEvent {
   tournamentMode?: boolean;
   date: string;
   time: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+  venueName?: string;
+  homeScore?: string;
+  awayScore?: string;
+  status?: string;
+  notes?: string;
 }
 
 export interface RSVP {
