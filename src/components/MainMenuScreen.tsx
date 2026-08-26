@@ -149,27 +149,8 @@ export default function MainMenuScreen({
         {/* Action Buttons & Info */}
         <div className="w-full flex flex-col gap-4">
 
-          <button
-            onClick={() => isPlayerPlus && onNewGame?.()}
-            disabled={!isPlayerPlus}
-            className={`w-full font-display text-[20px] md:text-[22px] font-bold py-4 rounded-lg raised-element transition-all flex items-center justify-center gap-3 ${
-              isPlayerPlus
-                ? 'bg-tertiary text-black bg-button-gradient hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(233,196,0,0.2)] cursor-pointer'
-                : 'bg-surface-container-high text-gray-500 opacity-50 cursor-not-allowed'
-            }`}
-            title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
-          >
-            <Play fill="currentColor" className="w-6 h-6" />
-            NEW GAME
-          </button>
-          {!isPlayerPlus && (
-            <p className="text-[11px] font-mono text-center text-gray-500 -mt-2">
-              Guest mode: Log in with a player or manager account to start new games.
-            </p>
-          )}
-
           {/* Announcements Section */}
-          <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-2 shadow-md mb-4">
+          <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-2 shadow-md mb-2">
             <span className="text-[12px] font-mono text-tertiary uppercase font-bold tracking-widest flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
               Announcements
@@ -180,7 +161,7 @@ export default function MainMenuScreen({
           </div>
 
           {/* Dashboard Tabs */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-2">
             <button
               onClick={() => setActiveTab('schedule')}
               className={`flex-1 py-2 text-sm font-bold font-mono tracking-wider rounded transition-colors ${
@@ -319,6 +300,35 @@ export default function MainMenuScreen({
                 </div>
              </div>
           )}
+
+          {/* New Game Button (Positioned below Schedule & Calendar section) */}
+          <div className="flex flex-col gap-2 mt-2">
+            <button
+              onClick={() => isPlayerPlus && onNewGame?.()}
+              disabled={!isPlayerPlus}
+              className={`w-full font-display text-[20px] md:text-[22px] font-bold py-4 rounded-lg raised-element transition-all flex items-center justify-center gap-3 ${
+                isPlayerPlus
+                  ? 'bg-tertiary text-black bg-button-gradient hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(233,196,0,0.2)] cursor-pointer'
+                  : 'bg-surface-container-high text-gray-500 opacity-50 cursor-not-allowed'
+              }`}
+              title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
+            >
+              <Play fill="currentColor" className="w-6 h-6" />
+              NEW GAME
+            </button>
+            {!isPlayerPlus && (
+              <p className="text-[11px] font-mono text-center text-gray-500">
+                Guest mode: Log in with a player or manager account to start new games.
+              </p>
+            )}
+          </div>
+
+          {/* Footer Disclaimer Text Section */}
+          <div className="mt-4 px-2 py-3 border-t border-[#222222]/80 text-center">
+            <p className="text-[11px] leading-relaxed text-gray-500 font-sans">
+              The Scorekeeper WebApp is the official digital application adjacent to the Blackout Hockey website. <a href="https://www.blackouthockey.nl" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-tertiary transition-colors underline underline-offset-2">www.blackouthockey.nl</a> is the official website of Blackout Hockey. Third party trademarks, logo&apos;s, emblems or copyrights are the property of their respective owners. All rights reserved.
+            </p>
+          </div>
 
         </div>
 

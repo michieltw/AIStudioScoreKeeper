@@ -714,12 +714,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     {isOwnProfile && (
                                         <button
                                             onClick={handleOpenEditProfile}
-                                            className="text-xs text-on-surface-variant hover:text-white p-1 rounded hover:bg-white/5 transition-colors flex items-center gap-1 bg-surface-container-high px-2 py-1 border border-[#2A2A2A]"
+                                            className="text-xs text-on-surface-variant hover:text-white p-1.5 rounded hover:bg-white/5 transition-colors"
                                             aria-label="Customize details"
                                             title="Customize details"
                                         >
                                             <Edit2 className="w-3.5 h-3.5" />
-                                            <span>Edit Details</span>
                                         </button>
                                     )}
                                 </div>
