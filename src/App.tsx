@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Menu, X, User as UserIcon, LogOut } from 'lucide-react';
 import LoginScreen from './components/LoginScreen';
 import MainMenuScreen from './components/MainMenuScreen';
@@ -19,6 +19,22 @@ import SetupWizardScreen from './components/SetupWizardScreen';
 import { Screen, Player, User } from './types';
 import { defaultSettingsContract } from './settingsContract';
 
+
+function FeedbackScreen({ title, titleColor = "text-tertiary", message, buttonText, buttonClass = "bg-surface-container text-white hover:bg-white/10 transition-colors", onClick }: { title: string, titleColor?: string, message: string, buttonText: string, buttonClass?: string, onClick: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
+      <h2 className={`text-xl font-bold ${titleColor} font-display uppercase tracking-wider`}>{title}</h2>
+      <p className="text-sm text-on-surface-variant max-w-md">{message}</p>
+      <button
+        onClick={onClick}
+        className={`${buttonClass} font-bold px-4 py-2 rounded font-mono text-xs uppercase`}
+      >
+        {buttonText}
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
   const [viewedPerson, setViewedPerson] = useState<any>(null);
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
@@ -26,13 +42,13 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isFading, setIsFading] = useState(false);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setIsFading(true);
     setTimeout(() => {
       setIsDarkMode(prev => !prev);
       setIsFading(false);
     }, 1500);
-  };
+  }, []);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scheduledGameData, setScheduledGameData] = useState<{
     id?: string;
@@ -47,19 +63,19 @@ export default function App() {
     matchType?: string;
   } | null>(null);
 
-  const handleStartScheduledGame = (gameData: any) => {
+  const handleStartScheduledGame = useCallback((gameData: any) => {
     if (currentUser?.role === 'Guest') return;
     setScheduledGameData(gameData);
     setCurrentScreen('settings');
     setIsSidebarOpen(false);
-  };
+  }, [currentUser]);
 
-  const handleNewGame = () => {
+  const handleNewGame = useCallback(() => {
     if (currentUser?.role === 'Guest') return;
     setScheduledGameData(null);
     setCurrentScreen('settings');
     setIsSidebarOpen(false);
-  };
+  }, [currentUser]);
 
   const isGuest = currentUser?.role === 'Guest';
   const isAdmin = currentUser && currentUser.role === 'Admin';
@@ -67,7 +83,7 @@ export default function App() {
   const isPlayerPlus = currentUser && ['Admin', 'League Manager', 'Team Manager', 'Player'].includes(currentUser.role);
   const isLeagueManagerPlus = currentUser && ['Admin', 'League Manager'].includes(currentUser.role);
 
-  const navigateTo = (screen: Screen) => {
+  const navigateTo = useCallback((screen: Screen) => {
     if (screen === 'database' && !isLeagueManagerPlus) {
       return;
     }
@@ -77,13 +93,13 @@ export default function App() {
     if (screen === 'my-profile') setViewedPerson(null);
     setCurrentScreen(screen);
     setIsSidebarOpen(false);
-  };
+  }, [isLeagueManagerPlus, isGuest]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setCurrentUser(null);
     setCurrentScreen('splash');
     setIsSidebarOpen(false);
-  };
+  }, []);
 
   const renderSidebarContent = () => (
     <div className="flex flex-col h-full bg-[#050505] text-on-surface-variant p-4 w-80 sm:w-96 max-w-[92vw] border-r border-[#2A2A2A]">
@@ -415,18 +431,14 @@ export default function App() {
                 isLeagueManagerPlus ? (
                   <DatabaseScreen onBack={() => setCurrentScreen('main-menu')} />
                 ) : (
-                  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
-                    <h2 className="text-xl font-bold text-error font-display uppercase tracking-wider">Access Restricted</h2>
-                    <p className="text-sm text-on-surface-variant max-w-md">
-                      You are not authorized to view or edit database configuration. Please log in with a League Manager or Admin account.
-                    </p>
-                    <button
-                      onClick={() => setCurrentScreen('main-menu')}
-                      className="bg-tertiary text-black font-bold px-4 py-2 rounded font-mono text-xs uppercase"
-                    >
-                      Back to Dashboard
-                    </button>
-                  </div>
+                  <FeedbackScreen
+                    title="Access Restricted"
+                    titleColor="text-error"
+                    message="You are not authorized to view or edit database configuration. Please log in with a League Manager or Admin account."
+                    buttonText="Back to Dashboard"
+                    buttonClass="bg-tertiary text-black"
+                    onClick={() => setCurrentScreen('main-menu')}
+                  />
                 )
               )}
 
@@ -469,18 +481,12 @@ export default function App() {
 
               {/* Placeholder for new screens */}
               {['scores', 'standings', 'rulebook', 'more', 'players', 'my-team'].includes(currentScreen) && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-6 text-center">
-                  <h2 className="text-xl font-bold text-tertiary font-display uppercase tracking-wider">Coming Soon</h2>
-                  <p className="text-sm text-on-surface-variant max-w-md">
-                    The {currentScreen.replace('-', ' ')} feature is currently under development. Please check back later.
-                  </p>
-                  <button
-                    onClick={() => setCurrentScreen('main-menu')}
-                    className="bg-surface-container text-white hover:bg-white/10 transition-colors font-bold px-4 py-2 rounded font-mono text-xs uppercase"
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
+                <FeedbackScreen
+                  title="Coming Soon"
+                  message={`The ${currentScreen.replace('-', ' ')} feature is currently under development. Please check back later.`}
+                  buttonText="Back to Dashboard"
+                  onClick={() => setCurrentScreen('main-menu')}
+                />
               )}
             </div>
           </div>

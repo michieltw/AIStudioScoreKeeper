@@ -1,6 +1,6 @@
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Play } from 'lucide-react';
 import { User } from '../types';
 
@@ -87,9 +87,9 @@ export default function MainMenuScreen({
     fetchGamesData();
   }, []);
 
-  const handleVideoEnd = () => {
+  const handleVideoEnd = useCallback(() => {
     setVideoPlaying(false);
-  };
+  }, []);
 
   const isGuest = currentUser?.role === 'Guest';
   const isPlayerPlus = !isGuest && (!currentUser || ['Admin', 'League Manager', 'Team Manager', 'Player'].includes(currentUser.role));
