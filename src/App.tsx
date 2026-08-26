@@ -251,7 +251,7 @@ export default function App() {
             onClick={() => navigateTo('people-directory')}
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
-            People Directory
+            Registry
           </button>
 
           <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
