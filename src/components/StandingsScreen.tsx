@@ -7,8 +7,28 @@ interface StandingsScreenProps {
   onBack: () => void;
 }
 
+<<<<<<< HEAD
 export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   const [standings, setStandings] = useState<any[]>([]);
+=======
+const ensure2DArray = (val: any): any[][] => {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    if (val.length === 0) return [];
+    if (Array.isArray(val[0])) return val;
+    return [val];
+  }
+  if (val && Array.isArray(val.data)) {
+    if (val.data.length === 0) return [];
+    if (Array.isArray(val.data[0])) return val.data;
+    return [val.data];
+  }
+  return [];
+};
+
+export default function StandingsScreen({ onBack }: StandingsScreenProps) {
+  const [standings, setStandings] = useState<any[][]>([]);
+>>>>>>> origin/main
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,9 +54,15 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
       try {
         const standingsRes = await fetchGasData(`${gasUrl}`, { action: 'getStandings' });
         const standingsData = await standingsRes.json();
+<<<<<<< HEAD
 
         // GAS returns array of arrays including header
         setStandings(standingsData);
+=======
+
+        // GAS returns array of arrays including header
+        setStandings(ensure2DArray(standingsData));
+>>>>>>> origin/main
       } catch (e: any) {
         setError('Fout bij het ophalen van gegevens: ' + e.message);
       } finally {
@@ -48,6 +74,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   }, []);
 
   // Helpers to get specific indexes
+<<<<<<< HEAD
   const headers = standings.length > 0 ? standings[0] : [];
   const getColIndex = (colName: string) => headers.indexOf(colName);
 
@@ -60,6 +87,23 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
     const values = new Set<string>();
     data.slice(1).forEach(row => {
       if (row[columnIndex] !== undefined && row[columnIndex] !== null && row[columnIndex] !== '') {
+=======
+  const headers = (Array.isArray(standings) && standings.length > 0 && Array.isArray(standings[0])) ? standings[0] : [];
+  const getColIndex = (colName: string) => {
+    const target = colName.toLowerCase();
+    return headers.findIndex((h: any) => String(h || '').toLowerCase() === target);
+  };
+
+  const seasonColIndex = getColIndex('Season') > -1 ? getColIndex('Season') : getColIndex('season_id');
+  const divisionColIndex = getColIndex('Division') > -1 ? getColIndex('Division') : getColIndex('tier_id');
+
+  // Get unique divisions and seasons
+  const getUniqueValues = (data: any[][], columnIndex: number) => {
+    if (!Array.isArray(data) || data.length <= 1 || columnIndex === -1) return ['All'];
+    const values = new Set<string>();
+    data.slice(1).forEach(row => {
+      if (Array.isArray(row) && row[columnIndex] !== undefined && row[columnIndex] !== null && String(row[columnIndex]).trim() !== '') {
+>>>>>>> origin/main
         values.add(String(row[columnIndex]));
       }
     });
@@ -71,6 +115,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   };
 
   const availableSeasons = seasonColIndex > -1 ? getUniqueValues(standings, seasonColIndex) : ['All'];
+<<<<<<< HEAD
 
   // Reset sort when changing filters
   useEffect(() => {
@@ -85,13 +130,40 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
       return matchSeason;
     });
     return [headers, ...rows];
+=======
+  const availableDivisions = divisionColIndex > -1 ? getUniqueValues(standings, divisionColIndex).filter(v => v !== 'All') : [];
+  const divisionTabs = ['League', ...availableDivisions];
+
+  // Reset sort when changing tabs or filters
+  useEffect(() => {
+    setSortConfig(null);
+  }, [activeDivisionTab, seasonFilter]);
+
+  // Apply Filters
+  const filterData = (data: any[][]) => {
+    if (!Array.isArray(data) || data.length <= 1) return Array.isArray(data) ? data : [];
+    const headerRow = data[0];
+    const rows = data.slice(1).filter(row => {
+      if (!Array.isArray(row)) return false;
+      const matchSeason = seasonFilter === 'All' || (seasonColIndex > -1 && String(row[seasonColIndex]) === seasonFilter);
+      const matchDivision = activeDivisionTab === 'League' || (divisionColIndex > -1 && String(row[divisionColIndex]) === activeDivisionTab);
+      return matchSeason && matchDivision;
+    });
+    return [headerRow, ...rows];
+>>>>>>> origin/main
   };
 
   // Sort Data
   const sortData = (data: any[][]) => {
+<<<<<<< HEAD
     if (data.length <= 1 || !sortConfig) return data;
     const headerRow = data[0];
     const rows = [...data.slice(1)];
+=======
+    if (!Array.isArray(data) || data.length <= 1 || !sortConfig) return Array.isArray(data) ? data : [];
+    const headerRow = data[0];
+    const rows = [...data.slice(1)].filter(r => Array.isArray(r));
+>>>>>>> origin/main
     rows.sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -122,6 +194,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   };
 
   const filteredAndSortedStandings = sortData(filterData(standings));
+<<<<<<< HEAD
   const displayRows = Array.isArray(filteredAndSortedStandings) ? filteredAndSortedStandings.slice(1) : [];
 
   // Group by Division
@@ -136,6 +209,10 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
 
   // Sort divisions alphabetically or keep a default order
   const divisionKeys = Object.keys(groupedRows).sort();
+=======
+  const displayRows = Array.isArray(filteredAndSortedStandings) ? filteredAndSortedStandings.slice(1).filter(r => Array.isArray(r)) : [];
+  // Filter out internal columns from display if needed. Let's just show all except maybe Division if we're on a Division tab, but NHL shows it anyway or groups by it. Let's show all that GAS returns to be safe.
+>>>>>>> origin/main
 
   return (
     <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
@@ -154,6 +231,26 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 max-w-5xl mx-auto w-full flex flex-col gap-6 pt-6 pb-12">
+<<<<<<< HEAD
+=======
+        {/* Tabs */}
+        {divisionTabs.length > 1 && (
+          <div className="flex overflow-x-auto no-scrollbar gap-1 bg-[#050505] border border-[#2A2A2A] rounded-lg p-1">
+            {divisionTabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveDivisionTab(tab)}
+                className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
+                  activeDivisionTab === tab ? 'bg-tertiary text-black' : 'text-gray-500 hover:text-white'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
+
+>>>>>>> origin/main
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 bg-surface-container-low p-4 rounded-lg border border-[#2A2A2A]">
           <div className="flex items-center gap-2 mb-2 sm:mb-0 w-full sm:w-auto">
@@ -190,6 +287,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
             {error}
           </div>
         ) : (
+<<<<<<< HEAD
           <div className="flex flex-col gap-8">
             {divisionKeys.length > 0 ? (
               divisionKeys.map(division => (
@@ -239,6 +337,44 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
               ))
             ) : (
               <div className="p-8 text-center text-gray-500 font-mono text-sm bg-surface-container-low rounded-lg">
+=======
+          <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
+            {displayRows.length > 0 ? (
+              <table className="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                  <tr className="bg-[#121414] border-b border-[#2A2A2A]">
+                    {headers.map((header: string, i: number) => (
+                      <th
+                        key={i}
+                        onClick={() => handleSort(i)}
+                        className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors sticky top-0"
+                      >
+                        <div className="flex items-center gap-1">
+                          {header}
+                          <ArrowUpDown className="w-3 h-3 opacity-30" />
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2A2A2A]">
+                  {displayRows.map((row: any[], i: number) => (
+                    <tr key={i} className="hover:bg-white/10 transition-colors">
+                      {row.map((cell: any, j: number) => {
+                        const isTeamColumn = headers[j]?.toLowerCase() === 'team';
+                        return (
+                          <td key={j} className={`p-3 text-sm whitespace-nowrap ${isTeamColumn ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
+                            {cell}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="p-8 text-center text-gray-500 font-mono text-sm">
+>>>>>>> origin/main
                 No standings data found.
               </div>
             )}

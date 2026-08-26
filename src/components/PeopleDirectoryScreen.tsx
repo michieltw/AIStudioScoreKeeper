@@ -133,7 +133,7 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
         </button>
         <h1 className="font-display text-[18px] font-bold text-white uppercase tracking-wider flex items-center gap-2">
           <Users className="w-5 h-5 text-tertiary" />
-          People Directory
+          Registry
         </h1>
         <button
           onClick={() => fetchPeopleFromDb(true)}
@@ -186,11 +186,11 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
             </div>
         </div>
 
-        {/* Directory List */}
+        {/* Directory / Registry List */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-tertiary" />
-            <span className="text-sm font-mono">Loading directory from database...</span>
+            <span className="text-sm font-mono">Loading registry from database...</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

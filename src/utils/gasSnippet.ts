@@ -613,6 +613,48 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({status: "Success"})).setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (data.action === 'getSettings') {
+      const sheet = ss.getSheetByName("Settings");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getTeams') {
+      const sheet = ss.getSheetByName("Teams");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getStandings') {
+      const sheet = ss.getSheetByName("Standings");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getStats') {
+      const sheet = ss.getSheetByName("PlayerStats");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getGoalieStats') {
+      const sheet = ss.getSheetByName("goalie_stats") || ss.getSheetByName("GoalieStats");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getGames') {
+      const sheet = ss.getSheetByName("Games");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'getScheduledGames') {
+      const sheet = ss.getSheetByName("ScheduledGames");
+      const values = sheet ? sheet.getDataRange().getValues() : [];
+      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (data.action === 'saveGame' || data.logs) {
       const logsSheet = ss.getSheetByName("ActionLogs");
       if (!logsSheet) throw new Error("ActionLogs sheet niet gevonden");

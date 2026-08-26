@@ -17,6 +17,10 @@ import LineupBuilderScreen from './components/LineupBuilderScreen';
 import DraftModeScreen from './components/DraftModeScreen';
 import SetupWizardScreen from './components/SetupWizardScreen';
 import StandingsScreen from './components/StandingsScreen';
+<<<<<<< HEAD
+=======
+import RulebookScreen from './components/RulebookScreen';
+>>>>>>> origin/main
 import { Screen, Player, User } from './types';
 import { defaultSettingsContract } from './settingsContract';
 
@@ -250,7 +254,7 @@ export default function App() {
             onClick={() => navigateTo('people-directory')}
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'people-directory' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
-            People Directory
+            Registry
           </button>
 
           <div className="col-span-2 my-1 border-t border-[#2A2A2A]"></div>
@@ -482,8 +486,15 @@ export default function App() {
 
               {currentScreen === 'standings' && <StandingsScreen onBack={() => setCurrentScreen('main-menu')} />}
 
+<<<<<<< HEAD
               {/* Placeholder for new screens */}
               {['scores', 'rulebook', 'more', 'players', 'my-team'].includes(currentScreen) && (
+=======
+              {currentScreen === 'rulebook' && <RulebookScreen onBack={() => setCurrentScreen('main-menu')} />}
+
+              {/* Placeholder for new screens */}
+              {['scores', 'more', 'players', 'my-team'].includes(currentScreen) && (
+>>>>>>> origin/main
                 <FeedbackScreen
                   title="Coming Soon"
                   message={`The ${currentScreen.replace('-', ' ')} feature is currently under development. Please check back later.`}
