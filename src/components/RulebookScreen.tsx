@@ -326,11 +326,10 @@ export default function RulebookScreen({ onBack }: RulebookScreenProps) {
     {
       id: 'sponsormogelijkheden',
       number: '9',
-      title: 'Sponsormogelijkheden (Voor volledigheid vermeld in de bron)',
+      title: 'Sponsormogelijkheden',
       icon: Award,
       content: (
         <div className="space-y-4 text-sm text-gray-300">
-          <p className="text-xs text-gray-400">De House League biedt de volgende sponsormogelijkheden:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Kleding */}
             <div className="bg-[#0A0A0A] border border-[#2A2A2A] rounded-lg p-4">
@@ -409,28 +408,19 @@ export default function RulebookScreen({ onBack }: RulebookScreenProps) {
       {/* Main Container */}
       <div className="flex-1 overflow-y-auto p-4 max-w-4xl mx-auto w-full flex flex-col gap-6 pt-6 pb-16">
         
-        {/* Banner / Title Header */}
+        {/* Title Header */}
         <div className="bg-[#050505] border border-[#2A2A2A] rounded-xl p-5 shadow-lg relative overflow-hidden">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <span className="text-[11px] font-mono text-tertiary uppercase font-bold tracking-widest flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-tertiary"></span>
-                Officiële Regelgeving
-              </span>
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-wide">
-                Reglementenboek GIJS Groningen House League
-              </h2>
-              <p className="text-xs text-gray-400 mt-1">
-                Volledig en strikt feitelijk reglement gebaseerd op de officiële GIJS House League documentatie.
-              </p>
-            </div>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-wide">
+              Reglementenboek GIJS Groningen House League
+            </h2>
             <a
               href="https://gijsgroningen.nl/house-league/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 bg-surface-container text-xs font-mono font-bold text-gray-300 hover:text-tertiary px-3 py-2 rounded-lg border border-[#2A2A2A] hover:border-tertiary/40 transition-colors whitespace-nowrap"
             >
-              <span>Bron Pagina</span>
+              <span>Bron</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -487,13 +477,6 @@ export default function RulebookScreen({ onBack }: RulebookScreenProps) {
               );
             })
           )}
-        </div>
-
-        {/* Footer Disclaimer */}
-        <div className="p-4 bg-[#050505] border border-[#2A2A2A]/60 rounded-lg text-center">
-          <p className="text-[11px] text-gray-500 font-mono">
-            GIJS Groningen House League • Reglementen & Richtlijnen • 18+ Competitie
-          </p>
         </div>
 
       </div>

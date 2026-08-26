@@ -7,8 +7,23 @@ interface StandingsScreenProps {
   onBack: () => void;
 }
 
+const ensure2DArray = (val: any): any[][] => {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    if (val.length === 0) return [];
+    if (Array.isArray(val[0])) return val;
+    return [val];
+  }
+  if (val && Array.isArray(val.data)) {
+    if (val.data.length === 0) return [];
+    if (Array.isArray(val.data[0])) return val.data;
+    return [val.data];
+  }
+  return [];
+};
+
 export default function StandingsScreen({ onBack }: StandingsScreenProps) {
-  const [standings, setStandings] = useState<any[]>([]);
+  const [standings, setStandings] = useState<any[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +51,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
         const standingsData = await standingsRes.json();
 
         // GAS returns array of arrays including header
-        setStandings(standingsData);
+        setStandings(ensure2DArray(standingsData));
       } catch (e: any) {
         setError('Fout bij het ophalen van gegevens: ' + e.message);
       } finally {
@@ -48,18 +63,21 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   }, []);
 
   // Helpers to get specific indexes
-  const headers = standings.length > 0 ? standings[0] : [];
-  const getColIndex = (colName: string) => headers.indexOf(colName);
+  const headers = (Array.isArray(standings) && standings.length > 0 && Array.isArray(standings[0])) ? standings[0] : [];
+  const getColIndex = (colName: string) => {
+    const target = colName.toLowerCase();
+    return headers.findIndex((h: any) => String(h || '').toLowerCase() === target);
+  };
 
-  const seasonColIndex = getColIndex('Season');
-  const divisionColIndex = getColIndex('Division');
+  const seasonColIndex = getColIndex('Season') > -1 ? getColIndex('Season') : getColIndex('season_id');
+  const divisionColIndex = getColIndex('Division') > -1 ? getColIndex('Division') : getColIndex('tier_id');
 
   // Get unique divisions and seasons
   const getUniqueValues = (data: any[][], columnIndex: number) => {
-    if (data.length <= 1 || columnIndex === -1) return ['All'];
+    if (!Array.isArray(data) || data.length <= 1 || columnIndex === -1) return ['All'];
     const values = new Set<string>();
     data.slice(1).forEach(row => {
-      if (row[columnIndex] !== undefined && row[columnIndex] !== null && row[columnIndex] !== '') {
+      if (Array.isArray(row) && row[columnIndex] !== undefined && row[columnIndex] !== null && String(row[columnIndex]).trim() !== '') {
         values.add(String(row[columnIndex]));
       }
     });
@@ -81,20 +99,22 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
 
   // Apply Filters
   const filterData = (data: any[][]) => {
-    if (data.length <= 1) return data;
+    if (!Array.isArray(data) || data.length <= 1) return Array.isArray(data) ? data : [];
+    const headerRow = data[0];
     const rows = data.slice(1).filter(row => {
+      if (!Array.isArray(row)) return false;
       const matchSeason = seasonFilter === 'All' || (seasonColIndex > -1 && String(row[seasonColIndex]) === seasonFilter);
       const matchDivision = activeDivisionTab === 'League' || (divisionColIndex > -1 && String(row[divisionColIndex]) === activeDivisionTab);
       return matchSeason && matchDivision;
     });
-    return [headers, ...rows];
+    return [headerRow, ...rows];
   };
 
   // Sort Data
   const sortData = (data: any[][]) => {
-    if (data.length <= 1 || !sortConfig) return data;
+    if (!Array.isArray(data) || data.length <= 1 || !sortConfig) return Array.isArray(data) ? data : [];
     const headerRow = data[0];
-    const rows = [...data.slice(1)];
+    const rows = [...data.slice(1)].filter(r => Array.isArray(r));
     rows.sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -125,6 +145,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   };
 
   const filteredAndSortedStandings = sortData(filterData(standings));
+  const displayRows = Array.isArray(filteredAndSortedStandings) ? filteredAndSortedStandings.slice(1).filter(r => Array.isArray(r)) : [];
   // Filter out internal columns from display if needed. Let's just show all except maybe Division if we're on a Division tab, but NHL shows it anyway or groups by it. Let's show all that GAS returns to be safe.
 
   return (
@@ -198,7 +219,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
           </div>
         ) : (
           <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
-            {filteredAndSortedStandings.length > 1 ? (
+            {displayRows.length > 0 ? (
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-[#121414] border-b border-[#2A2A2A]">
@@ -217,7 +238,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2A2A2A]">
-                  {filteredAndSortedStandings.slice(1).map((row: any[], i: number) => (
+                  {displayRows.map((row: any[], i: number) => (
                     <tr key={i} className="hover:bg-white/10 transition-colors">
                       {row.map((cell: any, j: number) => {
                         const isTeamColumn = headers[j]?.toLowerCase() === 'team';

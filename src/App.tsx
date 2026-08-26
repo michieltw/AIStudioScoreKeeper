@@ -17,6 +17,7 @@ import LineupBuilderScreen from './components/LineupBuilderScreen';
 import DraftModeScreen from './components/DraftModeScreen';
 import SetupWizardScreen from './components/SetupWizardScreen';
 import StandingsScreen from './components/StandingsScreen';
+import RulebookScreen from './components/RulebookScreen';
 import { Screen, Player, User } from './types';
 import { defaultSettingsContract } from './settingsContract';
 
@@ -482,8 +483,10 @@ export default function App() {
 
               {currentScreen === 'standings' && <StandingsScreen onBack={() => setCurrentScreen('main-menu')} />}
 
+              {currentScreen === 'rulebook' && <RulebookScreen onBack={() => setCurrentScreen('main-menu')} />}
+
               {/* Placeholder for new screens */}
-              {['scores', 'rulebook', 'more', 'players', 'my-team'].includes(currentScreen) && (
+              {['scores', 'more', 'players', 'my-team'].includes(currentScreen) && (
                 <FeedbackScreen
                   title="Coming Soon"
                   message={`The ${currentScreen.replace('-', ' ')} feature is currently under development. Please check back later.`}
