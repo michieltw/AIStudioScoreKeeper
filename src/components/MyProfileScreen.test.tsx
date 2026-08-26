@@ -81,7 +81,7 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
       expect(screen.getAllByText('Alex Ovechkin').length).toBeGreaterThan(0);
     });
 
-    const changeBannerBtn = screen.getByRole('button', { name: /change banner/i });
+    const changeBannerBtn = screen.getByTitle('Change Banner Image');
     await user.click(changeBannerBtn);
 
     // Modal should be open
@@ -143,6 +143,51 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
       const lastCall = (global.fetch as any).mock.calls.find((call: any) => {
         const body = JSON.parse(call[1].body);
         return body.action === 'updateRow' && body.updateData?.photo_url === 'https://example.com/new-avatar.jpg';
+      });
+      expect(lastCall).toBeDefined();
+    });
+  });
+
+  it('opens Edit Profile modal with expanded fields, saves updated values to GAS database', async () => {
+    const user = userEvent.setup();
+    render(<MyProfileScreen currentUser={mockUser} onBack={mockOnBack} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Alex Ovechkin').length).toBeGreaterThan(0);
+    });
+
+    // Ensure removed buttons are not rendered
+    expect(screen.queryByText(/add to story/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit details/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+ add bio/i)).not.toBeInTheDocument();
+
+    // Click Edit profile button
+    const editProfileBtn = screen.getByRole('button', { name: /edit profile/i });
+    await user.click(editProfileBtn);
+
+    // Modal should be open
+    expect(screen.getByText('Update personal, hockey, and federation profile information')).toBeInTheDocument();
+
+    // Fill in expanded fields
+    const bondsInput = screen.getByPlaceholderText(/e\.g\. IJN-104928/i);
+    await user.type(bondsInput, 'IJN-998877');
+
+    const playstyleInput = screen.getByPlaceholderText(/e\.g\. Sniper, Playmaker/i);
+    await user.type(playstyleInput, 'Power Forward');
+
+    // Click Save Profile
+    const saveProfileBtn = screen.getByRole('button', { name: /save profile/i });
+    await user.click(saveProfileBtn);
+
+    await waitFor(() => {
+      const lastCall = (global.fetch as any).mock.calls.find((call: any) => {
+        const body = JSON.parse(call[1].body);
+        return (
+          body.action === 'updateRow' &&
+          body.sheetName === 'persons' &&
+          body.updateData?.ijn_bondsnummer === 'IJN-998877' &&
+          body.updateData?.playstyle === 'Power Forward'
+        );
       });
       expect(lastCall).toBeDefined();
     });

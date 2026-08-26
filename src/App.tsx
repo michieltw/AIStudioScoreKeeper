@@ -87,19 +87,21 @@ export default function App() {
 
   const renderSidebarContent = () => (
     <div className="flex flex-col h-full bg-[#050505] text-on-surface-variant p-4 w-80 sm:w-96 max-w-[92vw] border-r border-[#2A2A2A]">
-      <div className="flex items-center justify-between mb-6">
-        <img
-          src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/house_league.png?v=1783714846"
-          alt="House League Logo"
-          className="h-10 object-contain cursor-pointer"
-          onClick={() => alert("Coming soon")}
-        />
+      <div className="relative mb-6">
+        <div className="w-full flex items-center justify-center p-1 bg-surface-container-lowest/60 rounded-lg border border-[#2A2A2A]/50 overflow-hidden">
+          <img
+            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/rn-image_picker_lib_temp_d0f755f8-b947-4286-ab59-4b0084fe98b7.jpg?v=1787694516"
+            alt="Blackout Hockey"
+            className="w-full h-auto max-h-28 object-contain rounded cursor-pointer transition-transform hover:scale-[1.01]"
+            onClick={() => alert("Coming soon")}
+          />
+        </div>
         <button 
           onClick={() => setIsSidebarOpen(false)} 
-          className="p-1 rounded text-on-surface-variant hover:text-white hover:bg-white/5 transition-colors"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 backdrop-blur-sm text-on-surface-variant hover:text-white hover:bg-black/90 transition-colors z-10 border border-white/10"
           aria-label="Close sidebar"
         >
-          <X className="w-6 h-6" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
@@ -263,17 +265,15 @@ export default function App() {
         </div>
       </nav>
 
-      <div className="mt-4 pt-4 border-t border-[#2A2A2A]">
-        <div className="flex justify-center mb-4">
-          <img
-            src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/BOLOGOBLACK.png?v=1784323868"
-            alt="Blackout Logo"
-            className="h-8 object-contain"
-          />
-        </div>
-        <button onClick={handleLogout} className="flex items-center gap-3 p-3 w-full text-left rounded hover:bg-error/10 hover:text-error transition-colors font-mono text-[12px] font-bold tracking-widest uppercase">
-          <LogOut className="w-5 h-5" /> Logout
+      <div className="mt-4 pt-4 border-t border-[#2A2A2A] flex items-center justify-between gap-2 px-1">
+        <button onClick={handleLogout} className="flex items-center gap-2.5 p-2 text-left rounded hover:bg-error/10 hover:text-error transition-colors font-mono text-[12px] font-bold tracking-widest uppercase">
+          <LogOut className="w-5 h-5 shrink-0" /> Logout
         </button>
+        <img
+          src="https://cdn.shopify.com/s/files/1/1038/7203/7203/files/house_league.png?v=1783714846"
+          alt="House League Logo"
+          className="h-16 w-auto object-contain shrink-0 mr-3"
+        />
       </div>
     </div>
   );

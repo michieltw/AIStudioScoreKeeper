@@ -184,8 +184,8 @@ const generateGasCodeSnippet = (token: string) => `function setupSheet() {
   let personsSheet = ss.getSheetByName("persons");
   if (!personsSheet) {
     personsSheet = ss.insertSheet("persons");
-    personsSheet.appendRow(["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "cover_url", "bio", "created_at", "updated_at"]);
-    personsSheet.getRange("A1:O1").setFontWeight("bold");
+    personsSheet.appendRow(["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "gender", "height_cm", "weight_kg", "jersey_number", "plays_position", "secondary_position", "shoots", "visibility", "ijn_bondsnummer", "playstyle", "status", "photo_url", "cover_url", "bio", "created_at", "updated_at"]);
+    personsSheet.getRange("A1:V1").setFontWeight("bold");
   }
 
   let playerEquipmentSheet = ss.getSheetByName("player_equipment");
@@ -443,22 +443,29 @@ function doPost(e) {
         newRow[idColIndex] = idValue;
 
         Object.keys(updateData).forEach(key => {
-          const colIndex = headers.indexOf(key);
-          if (colIndex !== -1) {
-            newRow[colIndex] = updateData[key];
+          let colIndex = headers.indexOf(key);
+          if (colIndex === -1) {
+            colIndex = headers.length;
+            headers.push(key);
+            sheet.getRange(1, colIndex + 1).setValue(key).setFontWeight("bold");
+            newRow.push('');
           }
+          newRow[colIndex] = updateData[key];
         });
 
         sheet.appendRow(newRow.map(sanitizeField));
       } else {
         // Update existing row
         Object.keys(updateData).forEach(key => {
-          const colIndex = headers.indexOf(key);
-          if (colIndex !== -1) {
-            // Arrays are 0-indexed, but getRange is 1-indexed. Plus we skip header row.
-            // rowIndexToUpdate is 1-based relative to data array (index 1 = row 2)
-            sheet.getRange(rowIndexToUpdate + 1, colIndex + 1).setValue(sanitizeField(updateData[key]));
+          let colIndex = headers.indexOf(key);
+          if (colIndex === -1) {
+            colIndex = headers.length;
+            headers.push(key);
+            sheet.getRange(1, colIndex + 1).setValue(key).setFontWeight("bold");
           }
+          // Arrays are 0-indexed, but getRange is 1-indexed. Plus we skip header row.
+          // rowIndexToUpdate is 1-based relative to data array (index 1 = row 2)
+          sheet.getRange(rowIndexToUpdate + 1, colIndex + 1).setValue(sanitizeField(updateData[key]));
         });
       }
 

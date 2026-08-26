@@ -27,11 +27,31 @@ export interface User {
 export interface Person {
   id: string;
   userId?: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   birthdate?: string;
+  date_of_birth?: string;
+  nationality?: string;
+  gender?: string;
+  height_cm?: string | number;
+  weight_kg?: string | number;
+  jersey_number?: string | number;
+  plays_position?: string;
+  secondary_position?: string;
+  shoots?: 'Left' | 'Right' | string;
+  visibility?: 'Public' | 'Private' | string;
+  ijn_bondsnummer?: string;
+  playstyle?: string;
+  status?: 'Active' | 'Inactive' | 'Retired' | string;
+  photo_url?: string;
+  cover_url?: string;
+  bio?: string;
   email?: string;
   phone?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PersonJob {
@@ -948,7 +968,7 @@ export interface PlayerLicense {
 
 export const dbSchema: Record<string, string[]> = {
   "users": ["id", "username", "email", "password_hash", "role", "display_name", "avatar_url", "bio", "active_from", "active_to", "created_at", "updated_at"],
-  "persons": ["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "height_cm", "weight_kg", "jersey_number", "plays_position", "photo_url", "cover_url", "bio", "created_at", "updated_at"],
+  "persons": ["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "gender", "height_cm", "weight_kg", "jersey_number", "plays_position", "secondary_position", "shoots", "visibility", "ijn_bondsnummer", "playstyle", "status", "photo_url", "cover_url", "bio", "created_at", "updated_at"],
   "jobs": ["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"],
   "organizations": ["id", "name", "country", "founded_year", "logo_url", "website", "description", "active_from", "active_to", "created_at", "updated_at"],
   "clubs": ["id", "organization_id", "name", "city", "country", "founded_year", "logo_url", "home_venue_id", "description", "active_from", "active_to", "created_at", "updated_at"],

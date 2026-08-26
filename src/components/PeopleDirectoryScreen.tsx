@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Search, Filter, RefreshCw, Loader2 } from 'lucide-react';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
+import CountryFlag from './CountryFlag';
 
 interface PeopleDirectoryScreenProps {
   onViewPerson?: (person: any) => void;
@@ -17,10 +18,10 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
 
   // Default fallback mock data
   const defaultPeople = [
-    { id: 'p1', name: 'John Doe', role: 'Player', job: 'Center', club: 'Blackout HC', photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
-    { id: 'p2', name: 'Jane Smith', role: 'Manager', job: 'General Manager', club: 'Blackout HC', photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
-    { id: 'p3', name: 'Mike Johnson', role: 'Coach', job: 'Head Coach', club: 'Ice Dogs', photo_url: '' },
-    { id: 'p4', name: 'Sarah Williams', role: 'Player', job: 'Goalie', club: 'Free Agent', photo_url: '' },
+    { id: 'p1', name: 'John Doe', role: 'Player', job: 'Center', club: 'Blackout HC', nationality: 'Netherlands', photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80' },
+    { id: 'p2', name: 'Jane Smith', role: 'Manager', job: 'General Manager', club: 'Blackout HC', nationality: 'Canada', photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80' },
+    { id: 'p3', name: 'Mike Johnson', role: 'Coach', job: 'Head Coach', club: 'Ice Dogs', nationality: 'USA', photo_url: '' },
+    { id: 'p4', name: 'Sarah Williams', role: 'Player', job: 'Goalie', club: 'Free Agent', nationality: 'Sweden', photo_url: '' },
   ];
 
   const fetchPeopleFromDb = async (force = false) => {
@@ -47,6 +48,7 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
         const posIdx = headers.indexOf('plays_position');
         const photoIdx = headers.indexOf('photo_url');
         const coverIdx = headers.indexOf('cover_url');
+        const natIdx = headers.indexOf('nationality');
 
         // Fetch jobs to associate with club/role if available
         let jobsMap: Record<string, any> = {};
@@ -77,6 +79,7 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
           const position = posIdx !== -1 ? r[posIdx] : 'Player';
           const photoUrl = photoIdx !== -1 ? r[photoIdx] : '';
           const coverUrl = coverIdx !== -1 ? r[coverIdx] : '';
+          const nationality = natIdx !== -1 ? r[natIdx] : '';
           const jobInfo = jobsMap[id];
 
           return {
@@ -89,7 +92,8 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
             cover_url: coverUrl,
             first_name: firstName,
             last_name: lastName,
-            plays_position: position
+            plays_position: position,
+            nationality: nationality
           };
         });
 
@@ -208,7 +212,12 @@ export default function PeopleDirectoryScreen({ onBack, onViewPerson }: PeopleDi
                           )}
                       </div>
                       <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold group-hover:text-tertiary transition-colors truncate">{person.name}</h3>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                              <h3 className="text-white font-bold group-hover:text-tertiary transition-colors truncate">{person.name}</h3>
+                              {person.nationality && (
+                                  <CountryFlag nationality={person.nationality} size="xs" />
+                              )}
+                          </div>
                           <div className="flex flex-col gap-0.5 mt-1">
                               <span className="text-xs text-on-surface-variant font-mono">Role: {person.role}</span>
                               <span className="text-xs text-on-surface-variant font-mono truncate">Job: {person.job}</span>

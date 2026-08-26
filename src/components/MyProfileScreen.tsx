@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal, Image as ImageIcon, Link as LinkIcon, X, Check, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal, Image as ImageIcon, Link as LinkIcon, X, Check, Trash2, AlertCircle, Loader2, Flag, Hash, Activity, Eye, ShieldCheck, Globe } from 'lucide-react';
 import { User, Achievement, Award } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
+import CountryFlag from './CountryFlag';
 
 interface MyProfileScreenProps {
   viewedPerson?: any;
@@ -176,36 +177,73 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
     { id: 'evt-2', title: 'Game vs Spartans', date: '2024-11-18 19:30' }
   ];
 
+  const handleOpenEditProfile = () => {
+    setEditProfileForm({
+      first_name: profileData?.first_name || '',
+      last_name: profileData?.last_name || '',
+      height_cm: profileData?.height_cm || '',
+      weight_kg: profileData?.weight_kg || '',
+      plays_position: profileData?.plays_position || 'Center',
+      secondary_position: profileData?.secondary_position || '',
+      shoots: profileData?.shoots || 'Right',
+      nationality: profileData?.nationality || 'Netherlands',
+      date_of_birth: profileData?.date_of_birth ? String(profileData.date_of_birth).substring(0, 10) : '',
+      gender: profileData?.gender || 'Male',
+      visibility: profileData?.visibility || 'Public',
+      ijn_bondsnummer: profileData?.ijn_bondsnummer || '',
+      jersey_number: profileData?.jersey_number || '',
+      playstyle: profileData?.playstyle || '',
+      status: profileData?.status || 'Active',
+      bio: profileData?.bio || ''
+    });
+    setIsEditingProfile(true);
+  };
+
   const handleSaveProfile = async () => {
     if (!personId) return;
     setLoading(true);
+    setError(null);
     try {
       const url = getGasUrl();
       if (!url) throw new Error("No database URL set.");
+
+      const payload = {
+        first_name: editProfileForm.first_name || '',
+        last_name: editProfileForm.last_name || '',
+        height_cm: editProfileForm.height_cm || '',
+        weight_kg: editProfileForm.weight_kg || '',
+        plays_position: editProfileForm.plays_position || '',
+        secondary_position: editProfileForm.secondary_position || '',
+        shoots: editProfileForm.shoots || 'Right',
+        nationality: editProfileForm.nationality || '',
+        date_of_birth: editProfileForm.date_of_birth || '',
+        gender: editProfileForm.gender || '',
+        visibility: editProfileForm.visibility || 'Public',
+        ijn_bondsnummer: editProfileForm.ijn_bondsnummer || '',
+        jersey_number: editProfileForm.jersey_number || '',
+        playstyle: editProfileForm.playstyle || '',
+        status: editProfileForm.status || 'Active',
+        bio: editProfileForm.bio || ''
+      };
 
       const res = await fetchGasData(url, {
         action: 'updateRow',
         sheetName: 'persons',
         idColumn: 'id',
         idValue: personId,
-        updateData: {
-          first_name: editProfileForm.first_name,
-          last_name: editProfileForm.last_name,
-          height_cm: editProfileForm.height_cm,
-          weight_kg: editProfileForm.weight_kg,
-          plays_position: editProfileForm.plays_position,
-          bio: editProfileForm.bio
-        }
+        updateData: payload
       });
       const result = await res.json();
       if (result.status === 'Success') {
         setIsEditingProfile(false);
+        setProfileData((prev: any) => ({ ...prev, ...payload }));
         fetchData(true);
       } else {
         throw new Error(result.error || 'Failed to update profile');
       }
     } catch(e: any) {
       setError(e.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -471,7 +509,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         {/* Cover Photo Area */}
         <div 
           onClick={() => handleOpenPhotoModal('cover')}
-          className="relative w-full h-48 md:h-64 bg-surface-container-highest rounded-b-lg overflow-hidden group z-20 cursor-pointer"
+          className="relative w-full h-48 md:h-64 bg-surface-container-highest rounded-b-lg overflow-hidden cursor-pointer group/banner z-20"
           title="Click to change banner image"
         >
             {/* Cover Image or Placeholder Cover Gradient */}
@@ -481,11 +519,9 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                <div className="absolute inset-0 bg-gradient-to-tr from-surface-container-high to-tertiary/20"></div>
             )}
 
-            {/* Hover overlay hint */}
-            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span className="bg-black/80 text-white text-xs font-mono font-bold px-3 py-1.5 rounded-full border border-white/20 flex items-center gap-1.5 shadow-lg">
-                <Camera className="w-3.5 h-3.5 text-tertiary" /> Click to Change Banner
-              </span>
+            {/* Hover Overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <Camera className="w-8 h-8 text-white" />
             </div>
 
             {canEditPhotos && (
@@ -495,12 +531,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                     e.stopPropagation();
                     handleOpenPhotoModal('cover');
                   }}
-                  className="absolute bottom-4 right-4 z-30 bg-black/80 hover:bg-black/95 text-white px-3.5 py-2 rounded-md flex items-center gap-2 text-sm font-bold transition-all border border-white/20 hover:border-tertiary/70 shadow-xl active:scale-95 cursor-pointer pointer-events-auto"
+                  className="absolute bottom-3 right-3 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary p-2 rounded-full text-tertiary transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto"
                   title="Change Banner Image"
                   aria-label="Change Banner Image"
                 >
-                    <Camera className="w-4 h-4 text-tertiary" />
-                    <span className="inline">Change Banner</span>
+                    <Camera className="w-4 h-4" />
                 </button>
             )}
         </div>
@@ -545,8 +580,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
                     {/* Name & Title */}
                     <div className="pb-2 text-center md:text-left mt-2 md:mt-0">
-                        <h1 className="text-3xl font-bold text-white flex items-center justify-center md:justify-start gap-2">
-                            {displayName}
+                        <h1 className="text-3xl font-bold text-white flex items-center justify-center md:justify-start gap-2.5 flex-wrap">
+                            <span>{displayName}</span>
+                            {(profileData?.nationality || viewedPerson?.nationality) && (
+                                <CountryFlag nationality={profileData?.nationality || viewedPerson?.nationality} size="md" />
+                            )}
                         </h1>
                         <p className="text-on-surface-variant font-medium mt-1">
                             {jobsData.find((j: any) => j.is_active)?.job_type || jobsData[0]?.job_type || viewedPerson?.job || "Head Coach"} • {jobsData.find((j: any) => j.is_active)?.organization_id || jobsData[0]?.organization_id || viewedPerson?.club || "Blackout HC"}
@@ -557,17 +595,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 {/* Actions (Facebook Style) */}
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto justify-center md:justify-end gap-2 mt-4 md:mb-2 md:mt-0">
                     {isOwnProfile ? (
-                        <>
-                            <button onClick={() => alert('Story feature coming soon!')} className="bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto">
-                                <Plus className="w-4 h-4" /> Add to Story
-                            </button>
-                            <button
-                              onClick={() => setIsEditingProfile(!isEditingProfile)}
-                              className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto"
-                            >
-                                <Edit2 className="w-4 h-4" /> Edit profile
-                            </button>
-                        </>
+                        <button
+                          onClick={handleOpenEditProfile}
+                          className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto shadow-sm active:scale-95"
+                        >
+                            <Edit2 className="w-4 h-4 text-tertiary" /> Edit profile
+                        </button>
                     ) : (
                         <div className="flex gap-2 w-full sm:w-auto">
                             <button onClick={() => alert(`You are now following ${displayName}`)} className="flex-1 sm:flex-none bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
@@ -638,82 +671,85 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             {/* Left Column (Intro / Details Widget) */}
             <div className="w-full md:w-1/3 flex flex-col gap-4">
                 <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-sm">
-                    <h3 className="text-white font-bold text-xl">Intro</h3>
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-white font-bold text-xl">Intro</h3>
+                        {profileData?.status && (
+                            <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
+                                profileData.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                profileData.status === 'Retired' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
+                            }`}>
+                                {profileData.status}
+                            </span>
+                        )}
+                    </div>
 
-                    {!isEditingProfile ? (
-                        <>
-                            <div className="flex flex-col gap-3 text-sm">
-                                <div className="flex items-center gap-3 text-on-surface-variant">
-                                    <Briefcase className="w-5 h-5 text-gray-400" />
-                                    <span>Role: <strong className="text-white">{profileData?.plays_position || viewedPerson?.role || currentUser?.role || "User"}</strong></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-on-surface-variant">
-                                    <Ruler className="w-5 h-5 text-gray-400" />
-                                    <span>Height: <strong className="text-white">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height || "6'1\"")}</strong></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-on-surface-variant">
-                                    <div className="w-5 text-center font-bold text-gray-400">W</div>
-                                    <span>Weight: <strong className="text-white">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight || "190 lbs")}</strong></span>
-                                </div>
-                                <div className="flex items-center gap-3 text-on-surface-variant">
-                                    <div className="w-5 text-center font-bold text-gray-400">H</div>
-                                    <span>Shoots: <strong className="text-white">{viewedPerson?.handedness || "Right"}</strong></span>
-                                </div>
-                            </div>
-
-                            {isOwnProfile && (
-                                <button
-                                  onClick={() => setIsEditingProfile(true)}
-                                  className="w-full py-1.5 bg-surface-container-highest hover:bg-surface-container-highest/80 border border-[#2A2A2A] rounded-md text-white font-bold text-sm transition-colors mt-2"
-                                >
-                                    Edit details
-                                </button>
-                            )}
-                        </>
-                    ) : (
-                        <div className="flex flex-col gap-3 text-sm">
-                            <input
-                                type="text" placeholder="First Name"
-                                value={editProfileForm.first_name || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, first_name: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <input
-                                type="text" placeholder="Last Name"
-                                value={editProfileForm.last_name || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, last_name: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <input
-                                type="text" placeholder="Height (cm)"
-                                value={editProfileForm.height_cm || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, height_cm: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <input
-                                type="text" placeholder="Weight (kg)"
-                                value={editProfileForm.weight_kg || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, weight_kg: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <input
-                                type="text" placeholder="Position"
-                                value={editProfileForm.plays_position || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, plays_position: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <textarea
-                                placeholder="Bio"
-                                value={editProfileForm.bio || ''}
-                                onChange={e => setEditProfileForm({...editProfileForm, bio: e.target.value})}
-                                className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1 text-white w-full"
-                            />
-                            <div className="flex gap-2">
-                                <button onClick={handleSaveProfile} className="bg-tertiary text-black flex-1 py-1.5 rounded-md font-bold">Save</button>
-                                <button onClick={() => setIsEditingProfile(false)} className="bg-surface-container-highest text-white flex-1 py-1.5 rounded-md">Cancel</button>
-                            </div>
+                    <div className="flex flex-col gap-3 text-sm">
+                        <div className="flex items-center gap-3 text-on-surface-variant">
+                            <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span>Role / Pos: <strong className="text-white">{profileData?.plays_position || viewedPerson?.role || currentUser?.role || "Player"}</strong></span>
                         </div>
-                    )}
+                        {profileData?.secondary_position && profileData.secondary_position !== 'None' && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <Shield className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>Sec. Position: <strong className="text-white">{profileData.secondary_position}</strong></span>
+                            </div>
+                        )}
+                        {profileData?.jersey_number && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <Hash className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>Jersey #: <strong className="text-white">#{profileData.jersey_number}</strong></span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 text-on-surface-variant">
+                            <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">H</div>
+                            <span>Shoots: <strong className="text-white">{profileData?.shoots || viewedPerson?.handedness || "Right"}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-3 text-on-surface-variant">
+                            <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span>Height: <strong className="text-white">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height || "—")}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-3 text-on-surface-variant">
+                            <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">W</div>
+                            <span>Weight: <strong className="text-white">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight || "—")}</strong></span>
+                        </div>
+                        {(profileData?.nationality || viewedPerson?.nationality) && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <div className="w-4 flex items-center justify-center shrink-0">
+                                    <CountryFlag nationality={profileData?.nationality || viewedPerson?.nationality} size="sm" />
+                                </div>
+                                <span>Nationality: <strong className="text-white">{profileData?.nationality || viewedPerson?.nationality}</strong></span>
+                            </div>
+                        )}
+                        {profileData?.date_of_birth && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>Birthdate: <strong className="text-white">{String(profileData.date_of_birth).substring(0, 10)}</strong></span>
+                            </div>
+                        )}
+                        {profileData?.gender && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>Gender: <strong className="text-white">{profileData.gender}</strong></span>
+                            </div>
+                        )}
+                        {profileData?.ijn_bondsnummer && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>IJN Bonds#: <strong className="text-white">{profileData.ijn_bondsnummer}</strong></span>
+                            </div>
+                        )}
+                        {profileData?.playstyle && (
+                            <div className="flex items-center gap-3 text-on-surface-variant">
+                                <Activity className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>Playstyle: <strong className="text-white">{profileData.playstyle}</strong></span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 text-on-surface-variant">
+                            <Eye className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span>Profile: <strong className="text-white">{profileData?.visibility || "Public"}</strong></span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -724,16 +760,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                         <div className="flex flex-col gap-4">
                             <h3 className="text-white font-bold text-xl mb-2">About</h3>
                             <p className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
-                                {profileData?.bio || `Welcome to ${displayName}'s profile. This section can include bio information, favorite quotes, or a summary of their hockey career.`}
+                                {profileData?.bio || `Welcome to ${displayName}'s profile. This section includes bio information, favorite quotes, or a summary of their hockey career.`}
                             </p>
-                            {isOwnProfile && !profileData?.bio && (
-                                <p
-                                  className="text-tertiary text-sm mt-4 cursor-pointer hover:underline"
-                                  onClick={() => setIsEditingProfile(true)}
-                                >
-                                    + Add bio
-                                </p>
-                            )}
                         </div>
                     )}
 
@@ -1212,6 +1240,295 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   )}
                 </button>
               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Comprehensive Edit Profile Modal */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 pointer-events-auto">
+          <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] relative z-[10000]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white font-display">
+                    Edit Profile
+                  </h2>
+                  <p className="text-xs text-on-surface-variant">
+                    Update personal, hockey, and federation profile information
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditingProfile(false)}
+                disabled={loading}
+                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-6 text-sm">
+              
+              {/* Error Message */}
+              {error && (
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="flex-1">{error}</div>
+                </div>
+              )}
+
+              {/* Section 1: Basic Identity */}
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
+                  <UserIcon className="w-3.5 h-3.5" /> Basic Information & Visibility
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">First Name</label>
+                    <input
+                      type="text"
+                      placeholder="First Name"
+                      value={editProfileForm.first_name || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, first_name: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="Last Name"
+                      value={editProfileForm.last_name || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, last_name: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Preferred Jersey #</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 8, 99"
+                      value={editProfileForm.jersey_number || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, jersey_number: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Public Profile?</label>
+                    <select
+                      value={editProfileForm.visibility || 'Public'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, visibility: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="Public">Public (Visible to everyone)</option>
+                      <option value="Private">Private (Members only)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Hockey & Athletic Attributes */}
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5" /> Hockey & Athletics
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Primary Position</label>
+                    <select
+                      value={editProfileForm.plays_position || 'Center'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, plays_position: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="Center">Center</option>
+                      <option value="Left Wing">Left Wing</option>
+                      <option value="Right Wing">Right Wing</option>
+                      <option value="Forward">Forward</option>
+                      <option value="Defense">Defense</option>
+                      <option value="Goalie">Goalie</option>
+                      <option value="Coach">Coach</option>
+                      <option value="Referee">Referee</option>
+                      <option value="Team Manager">Team Manager</option>
+                      <option value="Player">Player</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Secondary Position</label>
+                    <select
+                      value={editProfileForm.secondary_position || 'None'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, secondary_position: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="None">None</option>
+                      <option value="Center">Center</option>
+                      <option value="Left Wing">Left Wing</option>
+                      <option value="Right Wing">Right Wing</option>
+                      <option value="Forward">Forward</option>
+                      <option value="Defense">Defense</option>
+                      <option value="Goalie">Goalie</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Shoots / Handedness</label>
+                    <select
+                      value={editProfileForm.shoots || 'Right'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, shoots: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="Left">Left</option>
+                      <option value="Right">Right</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Height (cm)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 185"
+                      value={editProfileForm.height_cm || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, height_cm: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Weight (kg)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 85"
+                      value={editProfileForm.weight_kg || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, weight_kg: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Status</label>
+                    <select
+                      value={editProfileForm.status || 'Active'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, status: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Retired">Retired</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1 sm:col-span-3">
+                    <label className="text-xs text-on-surface-variant font-medium">Playstyle</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Sniper, Playmaker, Two-Way Forward, Power Forward, Enforcer, Butterfly Goalie"
+                      value={editProfileForm.playstyle || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, playstyle: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Federation & Personal */}
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Federation & Demographics
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">IJshockey Nederland Bondsnummer</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. IJN-104928"
+                      value={editProfileForm.ijn_bondsnummer || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, ijn_bondsnummer: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Nationality</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Netherlands, Canada, USA"
+                      value={editProfileForm.nationality || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, nationality: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Birthdate</label>
+                    <input
+                      type="date"
+                      value={editProfileForm.date_of_birth || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, date_of_birth: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-on-surface-variant font-medium">Gender</label>
+                    <select
+                      value={editProfileForm.gender || 'Male'}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, gender: e.target.value })}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Biography */}
+              <div className="flex flex-col gap-2">
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" /> Biography & Hockey Career
+                </h4>
+                <textarea
+                  rows={4}
+                  placeholder="Share details about your hockey background, favorite highlights, career achievements, or personal bio..."
+                  value={editProfileForm.bio || ''}
+                  onChange={e => setEditProfileForm({ ...editProfileForm, bio: e.target.value })}
+                  className="bg-[#080808] border border-[#2A2A2A] rounded-lg p-3 text-white focus:border-tertiary focus:outline-none transition-colors resize-y text-sm"
+                />
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#2A2A2A] bg-surface-container-low flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsEditingProfile(false)}
+                disabled={loading}
+                className="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-white bg-surface-container-high hover:bg-surface-container-highest rounded-lg transition-colors border border-[#2A2A2A]"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={loading}
+                className="px-5 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Profile</span>
+                  </>
+                )}
+              </button>
             </div>
 
           </div>
