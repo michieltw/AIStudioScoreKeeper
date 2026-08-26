@@ -6,6 +6,9 @@ interface CacheEntry {
   data: any;
 }
 
+// Keep track of pending requests by cache key
+const pendingRequests = new Map<string, Promise<Response>>();
+
 export const clearGasCache = () => {
   try {
     const keysToRemove: string[] = [];
@@ -27,7 +30,6 @@ export const fetchGasData = async (
   forceRefresh = false
 ): Promise<Response> => {
   const action = payload?.action;
-
   let cacheKey: string | null = null;
 
   // Cache all 'get' actions by default
@@ -56,29 +58,46 @@ export const fetchGasData = async (
     } catch (e) {
       console.warn('Cache read error', e);
     }
-  }
 
-  // Perform actual fetch
-  const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-
-  // If it's a cacheable request and successful, store it in cache
-  if (cacheKey && response.ok) {
-    // Clone response so we can read it and still return it
-    const clone = response.clone();
-    try {
-      const data = await clone.json();
-      const entry: CacheEntry = {
-        timestamp: Date.now(),
-        data
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(entry));
-    } catch (e) {
-      console.warn('Failed to cache gas response', e);
+    // If a request for this payload is already in flight, return its promise
+    if (pendingRequests.has(cacheKey)) {
+      // Need to clone the response of the pending promise so multiple callers can read the stream
+      return pendingRequests.get(cacheKey)!.then(res => res.clone());
     }
   }
 
-  return response;
+  // Perform actual fetch
+  const fetchPromise = fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }).then(async (response) => {
+    // If it's a cacheable request and successful, store it in cache
+    if (cacheKey && response.ok) {
+      // Clone response so we can read it and still return it
+      const clone = response.clone();
+      try {
+        const data = await clone.json();
+        const entry: CacheEntry = {
+          timestamp: Date.now(),
+          data
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(entry));
+      } catch (e) {
+        console.warn('Failed to cache gas response', e);
+      }
+    }
+    return response;
+  }).finally(() => {
+    if (cacheKey) {
+      pendingRequests.delete(cacheKey);
+    }
+  });
+
+  if (cacheKey) {
+    pendingRequests.set(cacheKey, fetchPromise);
+    // Clone it so the caller can read the json without consuming the shared response stream
+    return fetchPromise.then(res => res.clone());
+  }
+
+  return fetchPromise;
 };
