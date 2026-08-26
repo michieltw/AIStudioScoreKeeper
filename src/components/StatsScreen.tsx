@@ -8,11 +8,26 @@ interface StatsScreenProps {
   onBack: () => void;
 }
 
+const ensure2DArray = (val: any): any[][] => {
+  if (!val) return [];
+  if (Array.isArray(val)) {
+    if (val.length === 0) return [];
+    if (Array.isArray(val[0])) return val;
+    return [val];
+  }
+  if (val && Array.isArray(val.data)) {
+    if (val.data.length === 0) return [];
+    if (Array.isArray(val.data[0])) return val.data;
+    return [val.data];
+  }
+  return [];
+};
+
 export default function StatsScreen({ onBack }: StatsScreenProps) {
   const [activeTab, setActiveTab] = useState<'skaters' | 'goalies' | 'teams'>('skaters');
-  const [standings, setStandings] = useState<any[]>([]);
-  const [stats, setStats] = useState<any[]>([]);
-  const [goalies, setGoalies] = useState<any[]>([]);
+  const [standings, setStandings] = useState<any[][]>([]);
+  const [stats, setStats] = useState<any[][]>([]);
+  const [goalies, setGoalies] = useState<any[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,17 +67,17 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
           fetchGasData(`${gasUrl}`, { action: 'getGoalieStats' }).catch(() => null)
         ]);
 
-        const standingsData = await standingsRes.json();
-        const statsData = await statsRes.json();
-        let goaliesData: any[] = [];
+        const standingsRaw = await standingsRes.json();
+        const statsRaw = await statsRes.json();
+        let goaliesRaw: any = [];
         if (goaliesRes && goaliesRes.ok) {
-           goaliesData = await goaliesRes.json();
+          goaliesRaw = await goaliesRes.json();
         }
 
         // The GAS script returns a 2D array representing rows, including the header.
-        setStandings(standingsData);
-        setStats(statsData);
-        setGoalies(goaliesData);
+        setStandings(ensure2DArray(standingsRaw));
+        setStats(ensure2DArray(statsRaw));
+        setGoalies(ensure2DArray(goaliesRaw));
       } catch (e: any) {
         setError('Fout bij het ophalen van gegevens: ' + e.message);
       } finally {
@@ -75,10 +90,10 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
 
   // Filter derivation logic
   const getUniqueValues = (data: any[][], columnIndex: number) => {
-    if (data.length <= 1) return ['All'];
+    if (!Array.isArray(data) || data.length <= 1) return ['All'];
     const values = new Set<string>();
     data.slice(1).forEach(row => {
-      if (row[columnIndex] !== undefined && row[columnIndex] !== null) {
+      if (Array.isArray(row) && row[columnIndex] !== undefined && row[columnIndex] !== null && String(row[columnIndex]).trim() !== '') {
         values.add(String(row[columnIndex]));
       }
     });
@@ -86,8 +101,8 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   };
 
   // Indexes based on dbSchema
-  const statsHeaders = dbSchema['player_stats'] || stats[0] || [];
-  const teamHeaders = dbSchema['standings'] || standings[0] || [];
+  const statsHeaders = dbSchema['player_stats'] || (Array.isArray(stats[0]) ? stats[0] : []);
+  const teamHeaders = dbSchema['standings'] || (Array.isArray(standings[0]) ? standings[0] : []);
 
   const seasonColIndexStats = statsHeaders.indexOf('season_id');
   const teamColIndexStats = statsHeaders.indexOf('team_name'); // using team_name if available, otherwise team_id
@@ -100,7 +115,7 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   if (activeTab === 'goalies') currentDataForFilters = goalies;
   if (activeTab === 'teams') currentDataForFilters = standings;
 
-  const currentHeaders = (activeTab === 'skaters' ? statsHeaders : (activeTab === 'teams' ? teamHeaders : (dbSchema['goalie_stats'] || goalies[0] || [])));
+  const currentHeaders = (activeTab === 'skaters' ? statsHeaders : (activeTab === 'teams' ? teamHeaders : (dbSchema['goalie_stats'] || (Array.isArray(goalies[0]) ? goalies[0] : []))));
   const currentSeasonColIndex = currentHeaders.indexOf('season_id');
   const currentTeamColIndex = currentHeaders.indexOf('team_name') > -1 ? currentHeaders.indexOf('team_name') : currentHeaders.indexOf('team_id');
 
@@ -109,9 +124,10 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
 
   // Apply filters function
   const filterData = (data: any[][], seasonIndex: number, teamIndex: number) => {
-    if (data.length <= 1) return data;
+    if (!Array.isArray(data) || data.length <= 1) return Array.isArray(data) ? data : [];
     const headers = data[0];
     const rows = data.slice(1).filter(row => {
+      if (!Array.isArray(row)) return false;
       const matchSeason = seasonFilter === 'All' || (seasonIndex > -1 && String(row[seasonIndex]) === seasonFilter);
       const matchTeam = teamFilter === 'All' || (teamIndex > -1 && String(row[teamIndex]) === teamFilter) || activeTab === 'teams';
       return matchSeason && matchTeam;
@@ -120,9 +136,9 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   };
 
   const sortData = (data: any[][]) => {
-    if (data.length <= 1 || !sortConfig) return data;
+    if (!Array.isArray(data) || data.length <= 1 || !sortConfig) return Array.isArray(data) ? data : [];
     const headers = data[0];
-    const rows = [...data.slice(1)];
+    const rows = [...data.slice(1)].filter(r => Array.isArray(r));
     rows.sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
@@ -153,13 +169,13 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   };
 
   const filteredStats = sortData(filterData(stats, seasonColIndexStats, teamColIndexStats));
-  const filteredGoalies = sortData(filterData(goalies, (dbSchema['goalie_stats'] || goalies[0] || []).indexOf('season_id'), (dbSchema['goalie_stats'] || goalies[0] || []).indexOf('team_name')));
+  const filteredGoalies = sortData(filterData(goalies, (dbSchema['goalie_stats'] || (Array.isArray(goalies[0]) ? goalies[0] : [])).indexOf('season_id'), (dbSchema['goalie_stats'] || (Array.isArray(goalies[0]) ? goalies[0] : [])).indexOf('team_name')));
   const filteredStandings = sortData(filterData(standings, seasonColIndexStandings, -1));
 
   const getCurrentPageData = (data: any[][]) => {
-    if (data.length <= 1) return data;
+    if (!Array.isArray(data) || data.length <= 1) return Array.isArray(data) ? data : [];
     const headers = data[0];
-    const rows = data.slice(1);
+    const rows = data.slice(1).filter(r => Array.isArray(r));
     const startIdx = (currentPage - 1) * rowsPerPage;
     const paginatedRows = rows.slice(startIdx, startIdx + rowsPerPage);
     return [headers, ...paginatedRows];
@@ -169,19 +185,23 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   const displayGoalies = getCurrentPageData(filteredGoalies);
   const displayStandings = getCurrentPageData(filteredStandings);
 
-  const getTotalPages = (data: any[][]) => Math.ceil((data.length - 1) / rowsPerPage);
+  const getTotalPages = (data: any[][]) => {
+    if (!Array.isArray(data) || data.length <= 1) return 1;
+    return Math.ceil((data.length - 1) / rowsPerPage);
+  };
 
   // Leaderboards logic
   const getTopLeaders = (data: any[][], metricHeader: string, nameHeader: string, count: number = 3) => {
-    if (data.length <= 1) return [];
+    if (!Array.isArray(data) || data.length <= 1) return [];
     const headers = data[0];
+    if (!Array.isArray(headers)) return [];
     const metricIdx = headers.indexOf(metricHeader);
     const nameIdx = headers.indexOf(nameHeader);
     const teamIdx = headers.indexOf('team_name') > -1 ? headers.indexOf('team_name') : headers.indexOf('team_id');
 
     if (metricIdx === -1 || nameIdx === -1) return [];
 
-    const rows = data.slice(1).map(row => ({
+    const rows = data.slice(1).filter(r => Array.isArray(r)).map(row => ({
       name: String(row[nameIdx] || 'Unknown'),
       team: teamIdx > -1 ? String(row[teamIdx] || '') : '',
       value: Number(row[metricIdx]) || 0
@@ -203,27 +223,28 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
     { title: 'Wins', data: getTopLeaders(filteredGoalies, 'wins', 'person_full_name') },
     { title: 'Save %', data: getTopLeaders(filteredGoalies, 'save_percentage', 'person_full_name') },
     { title: 'GAA', data: getTopLeaders(filteredGoalies, 'goals_against_average', 'person_full_name') },
-    // Handle edge case where low GAA is better, just a simple desc sort for now per NHL typical wins/save%
   ];
 
   // Custom logic for GAA to sort ascending (lower is better, assuming >= some games played)
-  if (goalieLeaders[2] && filteredGoalies.length > 1) {
+  if (goalieLeaders[2] && Array.isArray(filteredGoalies) && filteredGoalies.length > 1) {
       const gHeaders = filteredGoalies[0];
-      const gaaIdx = gHeaders.indexOf('goals_against_average');
-      const nameIdx = gHeaders.indexOf('person_full_name');
-      const teamIdx = gHeaders.indexOf('team_name') > -1 ? gHeaders.indexOf('team_name') : gHeaders.indexOf('team_id');
-      const gpIdx = gHeaders.indexOf('games_played');
+      if (Array.isArray(gHeaders)) {
+        const gaaIdx = gHeaders.indexOf('goals_against_average');
+        const nameIdx = gHeaders.indexOf('person_full_name');
+        const teamIdx = gHeaders.indexOf('team_name') > -1 ? gHeaders.indexOf('team_name') : gHeaders.indexOf('team_id');
+        const gpIdx = gHeaders.indexOf('games_played');
 
-      if (gaaIdx > -1 && nameIdx > -1) {
-          const rows = filteredGoalies.slice(1)
-            .filter(row => gpIdx > -1 ? Number(row[gpIdx]) > 0 : true) // Filter out 0 GP
-            .map(row => ({
-              name: String(row[nameIdx] || 'Unknown'),
-              team: teamIdx > -1 ? String(row[teamIdx] || '') : '',
-              value: Number(row[gaaIdx]) || 0
-          }));
-          rows.sort((a, b) => a.value - b.value);
-          goalieLeaders[2].data = rows.slice(0, 3);
+        if (gaaIdx > -1 && nameIdx > -1) {
+            const rows = filteredGoalies.slice(1)
+              .filter(row => Array.isArray(row) && (gpIdx > -1 ? Number(row[gpIdx]) > 0 : true))
+              .map(row => ({
+                name: String(row[nameIdx] || 'Unknown'),
+                team: teamIdx > -1 ? String(row[teamIdx] || '') : '',
+                value: Number(row[gaaIdx]) || 0
+            }));
+            rows.sort((a, b) => a.value - b.value);
+            goalieLeaders[2].data = rows.slice(0, 3);
+        }
       }
   }
 
