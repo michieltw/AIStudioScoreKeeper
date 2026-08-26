@@ -114,16 +114,16 @@ export const generateGasCodeSnippet = (token: string) => `function setupSheet() 
   let gamesSheet = ss.getSheetByName("Games");
   if (!gamesSheet) {
     gamesSheet = ss.insertSheet("Games");
-    gamesSheet.appendRow(["GameID", "Date", "HomeTeam", "AwayTeam", "HomeScore", "AwayScore", "HomeSOG", "AwaySOG", "Location", "EventID"]);
-    gamesSheet.getRange("A1:J1").setFontWeight("bold");
+    gamesSheet.appendRow(["GameID", "Date", "HomeTeam", "AwayTeam", "HomeScore", "AwayScore", "HomeSOG", "AwaySOG", "Location", "EventID", "IsOfficial", "Season", "Division"]);
+    gamesSheet.getRange("A1:M1").setFontWeight("bold");
   }
 
   // Standings Tab
   let standingsSheet = ss.getSheetByName("Standings");
   if (!standingsSheet) {
     standingsSheet = ss.insertSheet("Standings");
-    standingsSheet.appendRow(["Team", "GP", "W", "L", "OTL", "PTS", "ROW", "GF", "GA", "DIFF"]);
-    standingsSheet.getRange("A1:J1").setFontWeight("bold");
+    standingsSheet.appendRow(["Team", "Season", "Division", "GP", "W", "L", "OTL", "PTS", "ROW", "GF", "GA", "DIFF"]);
+    standingsSheet.getRange("A1:L1").setFontWeight("bold");
   }
 
   // PlayerStats Tab
@@ -364,49 +364,54 @@ function calculateStandingsAndStats() {
     const homeScore = parseInt(row[4]) || 0;
     const awayScore = parseInt(row[5]) || 0;
     const isOfficial = row[10] === true || row[10] === 'true' || row[10] === 'TRUE';
+    const season = row[11] || 'All';
+    const division = row[12] || 'All';
 
     if (!isOfficial) continue;
 
-    if (!standings[homeTeam]) standings[homeTeam] = { GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
-    if (!standings[awayTeam]) standings[awayTeam] = { GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
+    const homeKey = homeTeam + '|' + season + '|' + division;
+    const awayKey = awayTeam + '|' + season + '|' + division;
 
-    standings[homeTeam].GP++;
-    standings[awayTeam].GP++;
+    if (!standings[homeKey]) standings[homeKey] = { Team: homeTeam, Season: season, Division: division, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
+    if (!standings[awayKey]) standings[awayKey] = { Team: awayTeam, Season: season, Division: division, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
 
-    standings[homeTeam].GF += homeScore;
-    standings[homeTeam].GA += awayScore;
-    standings[awayTeam].GF += awayScore;
-    standings[awayTeam].GA += homeScore;
+    standings[homeKey].GP++;
+    standings[awayKey].GP++;
+
+    standings[homeKey].GF += homeScore;
+    standings[homeKey].GA += awayScore;
+    standings[awayKey].GF += awayScore;
+    standings[awayKey].GA += homeScore;
 
     if (homeScore > awayScore) {
-      standings[homeTeam].W++;
-      standings[homeTeam].PTS += 2;
-      standings[homeTeam].ROW++;
-      standings[awayTeam].L++; // Simplification: OTL requires knowing if game went to OT
+      standings[homeKey].W++;
+      standings[homeKey].PTS += 2;
+      standings[homeKey].ROW++;
+      standings[awayKey].L++; // Simplification: OTL requires knowing if game went to OT
     } else if (awayScore > homeScore) {
-      standings[awayTeam].W++;
-      standings[awayTeam].PTS += 2;
-      standings[awayTeam].ROW++;
-      standings[homeTeam].L++;
+      standings[awayKey].W++;
+      standings[awayKey].PTS += 2;
+      standings[awayKey].ROW++;
+      standings[homeKey].L++;
     } else {
       // Tie
-      standings[homeTeam].OTL++;
-      standings[homeTeam].PTS += 1;
-      standings[awayTeam].OTL++;
-      standings[awayTeam].PTS += 1;
+      standings[homeKey].OTL++;
+      standings[homeKey].PTS += 1;
+      standings[awayKey].OTL++;
+      standings[awayKey].PTS += 1;
     }
   }
 
   // Clear and write standings
-  standingsSheet.getRange(2, 1, standingsSheet.getLastRow() || 2, 10).clearContent();
-  const standingsArray = Object.keys(standings).map(team => {
-    const s = standings[team];
-    return [team, s.GP, s.W, s.L, s.OTL, s.PTS, s.ROW, s.GF, s.GA, s.GF - s.GA];
+  standingsSheet.getRange(2, 1, standingsSheet.getLastRow() || 2, 12).clearContent();
+  const standingsArray = Object.keys(standings).map(key => {
+    const s = standings[key];
+    return [s.Team, s.Season, s.Division, s.GP, s.W, s.L, s.OTL, s.PTS, s.ROW, s.GF, s.GA, s.GF - s.GA];
   });
   // Sort by PTS descending, then ROW, then DIFF
-  standingsArray.sort((a, b) => b[5] - a[5] || b[6] - a[6] || b[9] - a[9]);
+  standingsArray.sort((a, b) => b[7] - a[7] || b[8] - a[8] || b[11] - a[11]);
   if (standingsArray.length > 0) {
-    standingsSheet.getRange(2, 1, standingsArray.length, 10).setValues(standingsArray);
+    standingsSheet.getRange(2, 1, standingsArray.length, 12).setValues(standingsArray);
   }
 
   // Calculate Player Stats
@@ -628,7 +633,8 @@ function doPost(e) {
           const g = data.game;
           gamesSheet.appendRow([
             g.GameID, g.Date, g.HomeTeam, g.AwayTeam,
-            g.HomeScore, g.AwayScore, g.HomeSOG, g.AwaySOG, g.Location, g.EventID || '', g.IsOfficial ? 'TRUE' : 'FALSE'
+            g.HomeScore, g.AwayScore, g.HomeSOG, g.AwaySOG, g.Location, g.EventID || '', g.IsOfficial ? 'TRUE' : 'FALSE',
+            g.Season || 'All', g.Division || 'All'
           ].map(sanitizeField));
         }
       }
