@@ -205,10 +205,8 @@ export default function GameSummaryModal({
           PenaltyMinutes: e.penaltyMinutes || ''
         }));
 
-        // For testing/mock purposes, assign a random division to simulate a real league
-        const mockDivisions = ['Division A', 'Division B'];
-        const randomDivision = mockDivisions[Math.floor(Math.random() * mockDivisions.length)];
-
+        // Default to blank/unassigned if not explicitly captured during game setup.
+        // In a full implementation, these would be captured in Settings/Setup wizard.
         const game = {
           GameID: gameId,
           EventID: eventId || '',
@@ -221,8 +219,8 @@ export default function GameSummaryModal({
           AwaySOG: gameState.sogAway,
           Location: location || '',
           IsOfficial: !!isOfficialGame,
-          Season: '2023-2024',
-          Division: randomDivision
+          Season: 'Unassigned',
+          Division: 'Unassigned'
         };
 
         await fetch(gasUrl, {

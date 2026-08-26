@@ -71,21 +71,18 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   };
 
   const availableSeasons = seasonColIndex > -1 ? getUniqueValues(standings, seasonColIndex) : ['All'];
-  const availableDivisions = divisionColIndex > -1 ? getUniqueValues(standings, divisionColIndex).filter(v => v !== 'All') : [];
-  const divisionTabs = ['League', ...availableDivisions];
 
-  // Reset sort when changing tabs or filters
+  // Reset sort when changing filters
   useEffect(() => {
     setSortConfig(null);
-  }, [activeDivisionTab, seasonFilter]);
+  }, [seasonFilter]);
 
   // Apply Filters
   const filterData = (data: any[][]) => {
     if (data.length <= 1) return data;
     const rows = data.slice(1).filter(row => {
       const matchSeason = seasonFilter === 'All' || (seasonColIndex > -1 && String(row[seasonColIndex]) === seasonFilter);
-      const matchDivision = activeDivisionTab === 'League' || (divisionColIndex > -1 && String(row[divisionColIndex]) === activeDivisionTab);
-      return matchSeason && matchDivision;
+      return matchSeason;
     });
     return [headers, ...rows];
   };
@@ -125,7 +122,20 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
   };
 
   const filteredAndSortedStandings = sortData(filterData(standings));
-  // Filter out internal columns from display if needed. Let's just show all except maybe Division if we're on a Division tab, but NHL shows it anyway or groups by it. Let's show all that GAS returns to be safe.
+  const displayRows = Array.isArray(filteredAndSortedStandings) ? filteredAndSortedStandings.slice(1) : [];
+
+  // Group by Division
+  const groupedRows: Record<string, any[][]> = {};
+  displayRows.forEach(row => {
+    const div = divisionColIndex > -1 ? String(row[divisionColIndex]) : 'League';
+    if (!groupedRows[div]) {
+      groupedRows[div] = [];
+    }
+    groupedRows[div].push(row);
+  });
+
+  // Sort divisions alphabetically or keep a default order
+  const divisionKeys = Object.keys(groupedRows).sort();
 
   return (
     <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
@@ -144,23 +154,6 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 max-w-5xl mx-auto w-full flex flex-col gap-6 pt-6 pb-12">
-        {/* Tabs */}
-        {divisionTabs.length > 1 && (
-          <div className="flex overflow-x-auto no-scrollbar gap-1 bg-[#050505] border border-[#2A2A2A] rounded-lg p-1">
-            {divisionTabs.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveDivisionTab(tab)}
-                className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-mono text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap ${
-                  activeDivisionTab === tab ? 'bg-tertiary text-black' : 'text-gray-500 hover:text-white'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 bg-surface-container-low p-4 rounded-lg border border-[#2A2A2A]">
           <div className="flex items-center gap-2 mb-2 sm:mb-0 w-full sm:w-auto">
@@ -197,42 +190,55 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
             {error}
           </div>
         ) : (
-          <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
-            {filteredAndSortedStandings.length > 1 ? (
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-[#121414] border-b border-[#2A2A2A]">
-                    {headers.map((header: string, i: number) => (
-                      <th
-                        key={i}
-                        onClick={() => handleSort(i)}
-                        className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors sticky top-0"
-                      >
-                        <div className="flex items-center gap-1">
-                          {header}
-                          <ArrowUpDown className="w-3 h-3 opacity-30" />
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#2A2A2A]">
-                  {filteredAndSortedStandings.slice(1).map((row: any[], i: number) => (
-                    <tr key={i} className="hover:bg-white/10 transition-colors">
-                      {row.map((cell: any, j: number) => {
-                        const isTeamColumn = headers[j]?.toLowerCase() === 'team';
-                        return (
-                          <td key={j} className={`p-3 text-sm whitespace-nowrap ${isTeamColumn ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
-                            {cell}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex flex-col gap-8">
+            {divisionKeys.length > 0 ? (
+              divisionKeys.map(division => (
+                <div key={division} className="flex flex-col gap-4">
+                  <h2 className="text-lg font-display text-white uppercase tracking-wider pl-2 border-l-4 border-tertiary">
+                    {division === 'All' ? 'League' : division}
+                  </h2>
+                  <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="bg-[#121414] border-b border-[#2A2A2A]">
+                          {headers.map((header: string, i: number) => {
+                            if (i === divisionColIndex || i === seasonColIndex) return null; // hide division/season columns from UI
+                            return (
+                              <th
+                                key={i}
+                                onClick={() => handleSort(i)}
+                                className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors sticky top-0"
+                              >
+                                <div className="flex items-center gap-1">
+                                  {header}
+                                  <ArrowUpDown className="w-3 h-3 opacity-30" />
+                                </div>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#2A2A2A]">
+                        {groupedRows[division].map((row: any[], i: number) => (
+                          <tr key={i} className="hover:bg-white/10 transition-colors">
+                            {row.map((cell: any, j: number) => {
+                              if (j === divisionColIndex || j === seasonColIndex) return null; // hide division/season columns from UI
+                              const isTeamColumn = headers[j]?.toLowerCase() === 'team';
+                              return (
+                                <td key={j} className={`p-3 text-sm whitespace-nowrap ${isTeamColumn ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
+                                  {cell}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
             ) : (
-              <div className="p-8 text-center text-gray-500 font-mono text-sm">
+              <div className="p-8 text-center text-gray-500 font-mono text-sm bg-surface-container-low rounded-lg">
                 No standings data found.
               </div>
             )}
