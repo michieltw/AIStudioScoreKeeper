@@ -192,4 +192,26 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
       expect(lastCall).toBeDefined();
     });
   });
+
+  it('displays profile details in a structured two-column intro section', async () => {
+    render(<MyProfileScreen currentUser={mockUser} onBack={mockOnBack} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Alex Ovechkin').length).toBeGreaterThan(0);
+    });
+
+    // Check Column 1 (Athletics & Ice)
+    expect(screen.getByText('Athletics & Ice')).toBeInTheDocument();
+    expect(screen.getByText('Left Wing')).toBeInTheDocument();
+    expect(screen.getByText('#8')).toBeInTheDocument();
+    expect(screen.getByText('190 cm')).toBeInTheDocument();
+    expect(screen.getByText('107 kg')).toBeInTheDocument();
+
+    // Check Column 2 (Personal & Federation)
+    expect(screen.getByText('Personal & Federation')).toBeInTheDocument();
+    expect(screen.getByText('RUS')).toBeInTheDocument();
+    expect(screen.getByText('1985-09-17')).toBeInTheDocument();
+    expect(screen.getByText('Male')).toBeInTheDocument();
+    expect(screen.getByText('Public')).toBeInTheDocument();
+  });
 });

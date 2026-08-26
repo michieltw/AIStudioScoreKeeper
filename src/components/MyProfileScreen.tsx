@@ -29,6 +29,23 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
   const [jobsData, setJobsData] = useState<any[]>([]);
 
+  // Job Modal State
+  const [jobModal, setJobModal] = useState<{
+    isOpen: boolean;
+    jobId: string | null;
+    jobType: string;
+    organization: string;
+    isActive: boolean;
+  }>({
+    isOpen: false,
+    jobId: null,
+    jobType: '',
+    organization: '',
+    isActive: true
+  });
+  const [savingJob, setSavingJob] = useState(false);
+  const [jobModalError, setJobModalError] = useState<string | null>(null);
+
   // Photo & Banner Modal State
   const [photoModal, setPhotoModal] = useState<{
     isOpen: boolean;
@@ -314,34 +331,40 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
     }
   };
 
-  const handleSaveJob = async (job: any = null) => {
+  const handleOpenJobModal = (job: any = null) => {
+    if (job) {
+      setJobModal({
+        isOpen: true,
+        jobId: job.id,
+        jobType: job.job_type || '',
+        organization: job.organization_id || '',
+        isActive: job.is_active !== false && String(job.is_active) !== 'false'
+      });
+    } else {
+      setJobModal({
+        isOpen: true,
+        jobId: null,
+        jobType: '',
+        organization: '',
+        isActive: true
+      });
+    }
+    setJobModalError(null);
+  };
+
+  const handleSaveJobModal = async () => {
     if (!personId) return;
-    setLoading(true);
+    if (!jobModal.jobType.trim()) {
+      setJobModalError("Please enter a job role / title.");
+      return;
+    }
+    setSavingJob(true);
+    setJobModalError(null);
     try {
       const url = getGasUrl();
       if (!url) throw new Error("No database URL set.");
 
-      let jobId = job?.id;
-      let newJobType = '';
-      let newOrg = '';
-      let newIsActive = true;
-
-      if (job) {
-          // Edit existing - for simplicity using prompts or could use a proper form
-          newJobType = prompt("Enter job type/title:", job.job_type) || job.job_type;
-          newOrg = prompt("Enter organization/club:", job.organization_id) || job.organization_id;
-          newIsActive = confirm("Is this job currently active?");
-      } else {
-          // Add new
-          jobId = `job-${Date.now()}`;
-          newJobType = prompt("Enter job type/title (e.g. Head Coach):") || '';
-          newOrg = prompt("Enter organization/club:") || '';
-          if (!newJobType) {
-              setLoading(false);
-              return; // Cancelled
-          }
-      }
-
+      const jobId = jobModal.jobId || `job-${Date.now()}`;
       const res = await fetchGasData(url, {
         action: 'updateRow',
         sheetName: 'jobs',
@@ -349,28 +372,27 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         idValue: jobId,
         updateData: {
           person_id: personId,
-          job_type: newJobType,
-          organization_id: newOrg,
-          is_active: newIsActive
+          job_type: jobModal.jobType.trim(),
+          organization_id: jobModal.organization.trim(),
+          is_active: jobModal.isActive
         }
       });
 
       const result = await res.json();
       if (result.status === 'Success') {
+        setJobModal(prev => ({ ...prev, isOpen: false }));
         fetchData(true);
       } else {
         throw new Error(result.error || 'Failed to save job');
       }
     } catch(e: any) {
-      setError(e.message);
-      setLoading(false);
+      setJobModalError(e.message);
+    } finally {
+      setSavingJob(false);
     }
   };
 
   const handleRemoveJob = async (jobId: string) => {
-      if (!confirm("Are you sure you want to remove this job?")) return;
-      // In a real app we might delete the row, but here we can just mark it inactive or blank it out if delete isn't supported.
-      // Since updateRow adds or updates, let's just mark it inactive and "Deleted" for now.
       if (!personId) return;
       setLoading(true);
       try {
@@ -396,6 +418,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         }
       } catch(e: any) {
         setError(e.message);
+      } finally {
         setLoading(false);
       }
   };
@@ -665,388 +688,520 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             </div>
         </div>
 
-        {/* Content Area (Two Columns on Desktop) */}
-        <div className="flex flex-col md:flex-row gap-4 p-4 bg-surface-container-lowest md:bg-transparent min-h-[500px]">
+        {/* Content Area */}
+        <div className="p-4 bg-surface-container-lowest md:bg-transparent min-h-[500px]">
 
-            {/* Left Column (Intro / Details Widget) */}
-            <div className="w-full md:w-1/3 flex flex-col gap-4">
-                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-white font-bold text-xl">Intro</h3>
-                        {profileData?.status && (
-                            <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
-                                profileData.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                profileData.status === 'Retired' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
-                            }`}>
-                                {profileData.status}
-                            </span>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-3 text-sm">
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>Role / Pos: <strong className="text-white">{profileData?.plays_position || viewedPerson?.role || currentUser?.role || "Player"}</strong></span>
-                        </div>
-                        {profileData?.secondary_position && profileData.secondary_position !== 'None' && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <Shield className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>Sec. Position: <strong className="text-white">{profileData.secondary_position}</strong></span>
-                            </div>
-                        )}
-                        {profileData?.jersey_number && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <Hash className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>Jersey #: <strong className="text-white">#{profileData.jersey_number}</strong></span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">H</div>
-                            <span>Shoots: <strong className="text-white">{profileData?.shoots || viewedPerson?.handedness || "Right"}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>Height: <strong className="text-white">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height || "—")}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">W</div>
-                            <span>Weight: <strong className="text-white">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight || "—")}</strong></span>
-                        </div>
-                        {(profileData?.nationality || viewedPerson?.nationality) && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <div className="w-4 flex items-center justify-center shrink-0">
-                                    <CountryFlag nationality={profileData?.nationality || viewedPerson?.nationality} size="sm" />
+            {/* TAB: About */}
+            {activeTab === 'about' && (
+                <div className="flex flex-col lg:flex-row gap-4">
+                    {/* Intro / Profile Details Widget (Featuring Two Columns) */}
+                    <div className="w-full lg:w-7/12 flex flex-col gap-4">
+                        <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-white font-bold text-lg tracking-wide">Intro</h3>
                                 </div>
-                                <span>Nationality: <strong className="text-white">{profileData?.nationality || viewedPerson?.nationality}</strong></span>
+                                <div className="flex items-center gap-2">
+                                    {profileData?.status && (
+                                        <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
+                                            profileData.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                            profileData.status === 'Retired' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                            'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
+                                        }`}>
+                                            {profileData.status}
+                                        </span>
+                                    )}
+                                    {isOwnProfile && (
+                                        <button
+                                            onClick={handleOpenEditProfile}
+                                            className="text-xs text-on-surface-variant hover:text-white p-1 rounded hover:bg-white/5 transition-colors flex items-center gap-1 bg-surface-container-high px-2 py-1 border border-[#2A2A2A]"
+                                            aria-label="Customize details"
+                                            title="Customize details"
+                                        >
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                            <span>Edit Details</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                        {profileData?.date_of_birth && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>Birthdate: <strong className="text-white">{String(profileData.date_of_birth).substring(0, 10)}</strong></span>
+
+                            {/* Two-Column Details Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                {/* Column 1: Hockey & Athletics */}
+                                <div className="flex flex-col gap-3 p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
+                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold flex items-center gap-1.5 pb-1 border-b border-[#222222]">
+                                        <Activity className="w-3.5 h-3.5 shrink-0" /> Athletics & Ice
+                                    </h4>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Position</span>
+                                            <strong className="text-white font-medium truncate">{profileData?.plays_position || viewedPerson?.plays_position || viewedPerson?.job || viewedPerson?.role || currentUser?.role || "Player"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Shield className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Sec. Position</span>
+                                            <strong className="text-white font-medium truncate">
+                                                {profileData?.secondary_position && profileData.secondary_position !== 'None'
+                                                    ? profileData.secondary_position
+                                                    : (viewedPerson?.secondary_position && viewedPerson.secondary_position !== 'None' ? viewedPerson.secondary_position : '—')}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Hash className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Jersey #</span>
+                                            <strong className="text-white font-medium">{profileData?.jersey_number || viewedPerson?.jersey_number ? `#${profileData?.jersey_number || viewedPerson?.jersey_number}` : '—'}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">H</div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Shoots</span>
+                                            <strong className="text-white font-medium">{profileData?.shoots || viewedPerson?.shoots || viewedPerson?.handedness || "Right"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Height</span>
+                                            <strong className="text-white font-medium">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height_cm ? `${viewedPerson.height_cm} cm` : (viewedPerson?.height || "—"))}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">W</div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Weight</span>
+                                            <strong className="text-white font-medium">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight_kg ? `${viewedPerson.weight_kg} kg` : (viewedPerson?.weight || "—"))}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Activity className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Playstyle</span>
+                                            <strong className="text-white font-medium truncate">{profileData?.playstyle || viewedPerson?.playstyle || "—"}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Column 2: Personal & Federation */}
+                                <div className="flex flex-col gap-3 p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
+                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold flex items-center gap-1.5 pb-1 border-b border-[#222222]">
+                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> Personal & Federation
+                                    </h4>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <div className="w-4 flex items-center justify-center shrink-0">
+                                            <CountryFlag nationality={profileData?.nationality || viewedPerson?.nationality} size="xs" />
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Nationality</span>
+                                            <strong className="text-white font-medium truncate">{profileData?.nationality || viewedPerson?.nationality || "—"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Birthdate</span>
+                                            <strong className="text-white font-medium truncate">
+                                                {profileData?.date_of_birth
+                                                    ? String(profileData.date_of_birth).substring(0, 10)
+                                                    : (viewedPerson?.date_of_birth ? String(viewedPerson.date_of_birth).substring(0, 10) : '—')}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Gender</span>
+                                            <strong className="text-white font-medium">{profileData?.gender || viewedPerson?.gender || "Male"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">IJN Bondsnummer</span>
+                                            <strong className="text-white font-medium font-mono text-xs truncate">{profileData?.ijn_bondsnummer || viewedPerson?.ijn_bondsnummer || "—"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Eye className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Visibility</span>
+                                            <strong className="text-white font-medium">{profileData?.visibility || viewedPerson?.visibility || "Public"}</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Globe className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Primary Club</span>
+                                            <strong className="text-white font-medium truncate">
+                                                {jobsData.find((j: any) => j.is_active)?.organization_id || jobsData[0]?.organization_id || viewedPerson?.club || "Blackout HC"}
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-on-surface-variant">
+                                        <Flag className="w-4 h-4 text-gray-400 shrink-0" />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[11px] text-gray-500 leading-tight">Status</span>
+                                            <strong className="text-white font-medium">{profileData?.status || viewedPerson?.status || "Active"}</strong>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                        {profileData?.gender && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>Gender: <strong className="text-white">{profileData.gender}</strong></span>
-                            </div>
-                        )}
-                        {profileData?.ijn_bondsnummer && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>IJN Bonds#: <strong className="text-white">{profileData.ijn_bondsnummer}</strong></span>
-                            </div>
-                        )}
-                        {profileData?.playstyle && (
-                            <div className="flex items-center gap-3 text-on-surface-variant">
-                                <Activity className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>Playstyle: <strong className="text-white">{profileData.playstyle}</strong></span>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-3 text-on-surface-variant">
-                            <Eye className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>Profile: <strong className="text-white">{profileData?.visibility || "Public"}</strong></span>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Right Column (Dynamic Tab Content) */}
-            <div className="w-full md:w-2/3 flex flex-col gap-4">
-                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 shadow-sm min-h-[300px]">
-                    {activeTab === 'about' && (
-                        <div className="flex flex-col gap-4">
-                            <h3 className="text-white font-bold text-xl mb-2">About</h3>
+                    {/* Biography Widget */}
+                    <div className="w-full lg:w-5/12 flex flex-col gap-4">
+                        <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-3">
+                            <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+                                <h3 className="text-white font-bold text-lg tracking-wide">Biography</h3>
+                                {isOwnProfile && (
+                                    <button
+                                        onClick={handleOpenEditProfile}
+                                        className="text-xs text-on-surface-variant hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                                        title="Edit Biography"
+                                    >
+                                        <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
                             <p className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
                                 {profileData?.bio || `Welcome to ${displayName}'s profile. This section includes bio information, favorite quotes, or a summary of their hockey career.`}
                             </p>
                         </div>
-                    )}
+                    </div>
+                </div>
+            )}
 
-                    {activeTab === 'jobs' && (
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-white font-bold text-xl">Assigned Jobs & Roles</h3>
-                                {isOwnProfile && (
-                                    <button onClick={() => handleSaveJob()} className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1">
-                                        <Plus className="w-4 h-4" /> Add
-                                    </button>
-                                )}
-                            </div>
+            {/* TAB: Jobs */}
+            {activeTab === 'jobs' && (
+                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-4 max-w-4xl">
+                    <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+                        <div>
+                            <h3 className="text-white font-bold text-xl">Assigned Jobs & Roles</h3>
+                            <p className="text-xs text-on-surface-variant mt-0.5">Manage club appointments, coaching roles, and team assignments</p>
+                        </div>
+                        {isOwnProfile && (
+                            <button
+                                onClick={() => handleOpenJobModal()}
+                                className="bg-tertiary text-black px-3 py-1.5 rounded font-bold text-sm flex items-center gap-1.5 hover:bg-opacity-90 transition-opacity"
+                            >
+                                <Plus className="w-4 h-4" /> Add Role
+                            </button>
+                        )}
+                    </div>
 
-                            {jobsData.length > 0 ? jobsData.map((job: any) => (
-                                <div key={job.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col gap-1 relative group">
+                    {jobsData.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {jobsData.map((job: any) => (
+                                <div key={job.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-2 relative group hover:border-[#3A3A3A] transition-colors">
                                     <div className="flex justify-between items-start">
-                                        <span className="text-white font-bold text-lg">{job.job_type || "Unknown Job"}</span>
-                                        <span className={`text-xs px-2 py-1 rounded-md ${job.is_active ? 'bg-[#2A2A2A] text-gray-300' : 'bg-red-900/50 text-red-300'}`}>
-                                            {job.organization_id || "No Org"} {job.is_active ? '' : '(Inactive)'}
+                                        <span className="text-white font-bold text-base">{job.job_type || "Unknown Job"}</span>
+                                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                                            job.is_active !== false && String(job.is_active) !== 'false'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                        }`}>
+                                            {job.is_active !== false && String(job.is_active) !== 'false' ? 'Active' : 'Inactive'}
                                         </span>
                                     </div>
-                                    <span className="text-sm text-on-surface-variant">Role: {job.job_type || "Role"}</span>
+                                    <div className="text-sm text-on-surface-variant flex items-center gap-2">
+                                        <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span>Organization: <strong className="text-white">{job.organization_id || "No Org Specified"}</strong></span>
+                                    </div>
 
                                     {isOwnProfile && (
-                                        <div className="absolute top-4 right-4 hidden group-hover:flex gap-2">
-                                            <button onClick={() => handleSaveJob(job)} className="text-tertiary hover:text-white p-1">
-                                                <Edit2 className="w-4 h-4" />
+                                        <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-[#222222]">
+                                            <button
+                                                onClick={() => handleOpenJobModal(job)}
+                                                className="text-xs text-tertiary hover:text-white px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A] flex items-center gap-1"
+                                            >
+                                                <Edit2 className="w-3 h-3" /> Edit
                                             </button>
-                                            <button onClick={() => handleRemoveJob(job.id)} className="text-red-500 hover:text-red-400 p-1">
-                                                X
+                                            <button
+                                                onClick={() => handleRemoveJob(job.id)}
+                                                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A] flex items-center gap-1"
+                                            >
+                                                <Trash2 className="w-3 h-3" /> Remove
                                             </button>
                                         </div>
                                     )}
                                 </div>
-                            )) : (
-                                <div className="text-on-surface-variant text-sm">No jobs listed.</div>
-                            )}
-
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-on-surface-variant text-sm py-8 text-center bg-surface-container-lowest rounded-lg border border-[#2A2A2A]">
+                            No assigned jobs or roles found for this profile.
                         </div>
                     )}
+                </div>
+            )}
 
-                    {activeTab === 'equipment' && (
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-white font-bold text-xl">Preferred Equipment</h3>
-                                {isOwnProfile && (
-                                    <button
-                                      onClick={() => setIsEditingEquipment(!isEditingEquipment)}
-                                      className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1"
-                                    >
-                                        <Edit2 className="w-4 h-4" /> {isEditingEquipment ? 'Cancel' : 'Edit'}
-                                    </button>
-                                )}
+            {/* TAB: Equipment */}
+            {activeTab === 'equipment' && (
+                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-4 max-w-4xl">
+                    <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
+                        <div>
+                            <h3 className="text-white font-bold text-xl">Preferred Equipment</h3>
+                            <p className="text-xs text-on-surface-variant mt-0.5">Manage stick parameters, blade curves, and gear preferences</p>
+                        </div>
+                        {isOwnProfile && (
+                            <button
+                              onClick={() => setIsEditingEquipment(!isEditingEquipment)}
+                              className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1"
+                            >
+                                <Edit2 className="w-4 h-4" /> {isEditingEquipment ? 'Cancel' : 'Edit Equipment'}
+                            </button>
+                        )}
+                    </div>
+                    {!isEditingEquipment ? (
+                        <div className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Specifications</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Stick Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickBrand || "Bauer"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Stick Model</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickModel || "Nexus Sync"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Blade Curve</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickCurve || "P92"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Flex</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickFlex ? `${equipmentData.stickFlex} Flex` : "87 Flex"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Year Purchased</span>
+                                        <span className="text-white font-bold">{equipmentData?.stickPurchaseYear || "2023"}</span>
+                                    </div>
+                                </div>
                             </div>
-                            {!isEditingEquipment ? (
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex flex-col gap-2">
-                                        <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Specifications</span>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Stick Brand</span>
-                                                <span className="text-white font-bold">{equipmentData?.stickBrand || "Bauer"}</span>
-                                            </div>
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Stick Model</span>
-                                                <span className="text-white font-bold">{equipmentData?.stickModel || "Nexus Sync"}</span>
-                                            </div>
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Blade Curve</span>
-                                                <span className="text-white font-bold">{equipmentData?.stickCurve || "P92"}</span>
-                                            </div>
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Flex</span>
-                                                <span className="text-white font-bold">{equipmentData?.stickFlex ? `${equipmentData.stickFlex} Flex` : "87 Flex"}</span>
-                                            </div>
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Year Purchased</span>
-                                                <span className="text-white font-bold">{equipmentData?.stickPurchaseYear || "2023"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="flex flex-col gap-2">
-                                        <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Skate Brand</span>
-                                                <span className="text-white font-bold">{equipmentData?.skateBrand || "CCM"}</span>
-                                            </div>
-                                            <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
-                                                <span className="text-xs text-gray-400">Helmet Brand</span>
-                                                <span className="text-white font-bold">{equipmentData?.helmetBrand || "Warrior"}</span>
-                                            </div>
-                                        </div>
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Skate Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.skateBrand || "CCM"}</span>
+                                    </div>
+                                    <div className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-3 flex flex-col gap-1">
+                                        <span className="text-xs text-gray-400">Helmet Brand</span>
+                                        <span className="text-white font-bold">{equipmentData?.helmetBrand || "Warrior"}</span>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex flex-col gap-3">
-                                        <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Details</span>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Stick Brand</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. Bauer, CCM, True"
-                                                  value={editEquipmentForm.stickBrand || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickBrand: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Stick Model</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. Nexus Sync, Hyperlite 2"
-                                                  value={editEquipmentForm.stickModel || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickModel: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Blade Curve</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. P92, P28, P88, W03"
-                                                  value={editEquipmentForm.stickCurve || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickCurve: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Flex</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. 77, 85, 87, 95"
-                                                  value={editEquipmentForm.stickFlex || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickFlex: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Year Purchased</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. 2024, 2023"
-                                                  value={editEquipmentForm.stickPurchaseYear || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, stickPurchaseYear: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-3">
-                                        <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Skate Brand</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. CCM, Bauer, True"
-                                                  value={editEquipmentForm.skateBrand || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, skateBrand: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs text-gray-400">Helmet Brand</label>
-                                                <input
-                                                  type="text"
-                                                  placeholder="e.g. Warrior, Bauer, CCM"
-                                                  value={editEquipmentForm.helmetBrand || ''}
-                                                  onChange={e => setEditEquipmentForm({...editEquipmentForm, helmetBrand: e.target.value})}
-                                                  className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-2 mt-2">
-                                        <button
-                                          onClick={async () => {
-                                              await handleSaveEquipment('stick', {
-                                                  brand: editEquipmentForm.stickBrand,
-                                                  model: editEquipmentForm.stickModel,
-                                                  curve: editEquipmentForm.stickCurve,
-                                                  flex: editEquipmentForm.stickFlex,
-                                                  purchaseYear: editEquipmentForm.stickPurchaseYear,
-                                              });
-                                              await handleSaveEquipment('skate', {
-                                                  brand: editEquipmentForm.skateBrand,
-                                                  model: editEquipmentForm.skateModel,
-                                              });
-                                              await handleSaveEquipment('helmet', {
-                                                  brand: editEquipmentForm.helmetBrand,
-                                                  model: editEquipmentForm.helmetModel,
-                                              });
-                                              setIsEditingEquipment(false);
-                                          }}
-                                          className="bg-tertiary text-black flex-1 py-2 rounded-md font-bold text-sm tracking-wide uppercase font-mono"
-                                        >
-                                            Save All Equipment
-                                        </button>
-                                        <button
-                                          onClick={() => setIsEditingEquipment(false)}
-                                          className="bg-surface-container-highest text-white px-4 py-2 rounded-md text-sm font-mono uppercase"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
                         </div>
-                    )}
-
-                    {activeTab === 'events' && (
+                    ) : (
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-white font-bold text-xl mb-2">Upcoming Events</h3>
                             <div className="flex flex-col gap-3">
-                                {dummyEvents.map(event => (
-                                    <div key={event.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                        <div>
-                                            <h4 className="text-white font-bold">{event.title}</h4>
-                                            <p className="text-sm text-on-surface-variant flex items-center gap-1 mt-1">
-                                                <Calendar className="w-4 h-4" /> {event.date}
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-2 w-full sm:w-auto">
-                                            {['Attending', 'Not Attending', 'Maybe'].map(status => (
-                                                <button
-                                                    key={status}
-                                                    onClick={() => handleRsvpChange(event.id, status)}
-                                                    className={`flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                                                        rsvps[event.id] === status
-                                                            ? 'bg-tertiary text-black'
-                                                            : 'bg-surface-container-highest text-on-surface-variant hover:text-white'
-                                                    }`}
-                                                >
-                                                    {status}
-                                                </button>
-                                            ))}
-                                        </div>
+                                <span className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">Stick Details</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Stick Brand</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. Bauer, CCM, True"
+                                          value={editEquipmentForm.stickBrand || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, stickBrand: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
                                     </div>
-                                ))}
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Stick Model</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. Nexus Sync, Hyperlite 2"
+                                          value={editEquipmentForm.stickModel || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, stickModel: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Blade Curve</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. P92, P28, P88, W03"
+                                          value={editEquipmentForm.stickCurve || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, stickCurve: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Flex</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. 77, 85, 87, 95"
+                                          value={editEquipmentForm.stickFlex || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, stickFlex: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Year Purchased</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. 2024, 2023"
+                                          value={editEquipmentForm.stickPurchaseYear || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, stickPurchaseYear: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    )}
 
-                    {activeTab === 'achievements' && (
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-col gap-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Medal className="w-6 h-6 text-tertiary" />
-                                <h3 className="text-white font-bold text-xl">Awards</h3>
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                  {dummyAwards.map(award => (
-                                      <div key={award.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
-                                          <Medal className="w-8 h-8 text-yellow-400" />
-                                          <span className="text-white font-bold text-sm">{award.name}</span>
-                                      </div>
-                                  ))}
-                              </div>
+                            <div className="flex flex-col gap-3">
+                                <span className="text-xs font-mono uppercase tracking-wider text-gray-400 font-bold">Other Equipment</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Skate Brand</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. CCM, Bauer, True"
+                                          value={editEquipmentForm.skateBrand || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, skateBrand: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-400">Helmet Brand</label>
+                                        <input
+                                          type="text"
+                                          placeholder="e.g. Warrior, Bauer, CCM"
+                                          value={editEquipmentForm.helmetBrand || ''}
+                                          onChange={e => setEditEquipmentForm({...editEquipmentForm, helmetBrand: e.target.value})}
+                                          className="bg-[#050505] border border-[#2A2A2A] rounded px-2 py-1.5 text-white text-sm"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex flex-col gap-4 mt-2">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Star className="w-6 h-6 text-tertiary" />
-                                <h3 className="text-white font-bold text-xl">Milestones</h3>
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                  {dummyBadges.map(badge => (
-                                      <div key={badge.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
-                                          <Shield className="w-8 h-8 text-tertiary" />
-                                          <span className="text-white font-bold text-sm">{badge.name}</span>
-                                      </div>
-                                  ))}
-                              </div>
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={async () => {
+                                      await handleSaveEquipment('stick', {
+                                          brand: editEquipmentForm.stickBrand,
+                                          model: editEquipmentForm.stickModel,
+                                          curve: editEquipmentForm.stickCurve,
+                                          flex: editEquipmentForm.stickFlex,
+                                          purchaseYear: editEquipmentForm.stickPurchaseYear,
+                                      });
+                                      await handleSaveEquipment('skate', {
+                                          brand: editEquipmentForm.skateBrand,
+                                          model: editEquipmentForm.skateModel,
+                                      });
+                                      await handleSaveEquipment('helmet', {
+                                          brand: editEquipmentForm.helmetBrand,
+                                          model: editEquipmentForm.helmetModel,
+                                      });
+                                      setIsEditingEquipment(false);
+                                  }}
+                                  className="bg-tertiary text-black flex-1 py-2 rounded-md font-bold text-sm tracking-wide uppercase font-mono"
+                                >
+                                    Save All Equipment
+                                </button>
+                                <button
+                                  onClick={() => setIsEditingEquipment(false)}
+                                  className="bg-surface-container-highest text-white px-4 py-2 rounded-md text-sm font-mono uppercase"
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
-            </div>
+            )}
+
+            {/* TAB: Events */}
+            {activeTab === 'events' && (
+                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-4 max-w-4xl">
+                    <h3 className="text-white font-bold text-xl border-b border-[#2A2A2A] pb-3">Upcoming Events</h3>
+                    <div className="flex flex-col gap-3">
+                        {dummyEvents.map(event => (
+                            <div key={event.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h4 className="text-white font-bold">{event.title}</h4>
+                                    <p className="text-sm text-on-surface-variant flex items-center gap-1 mt-1">
+                                        <Calendar className="w-4 h-4" /> {event.date}
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    {['Attending', 'Not Attending', 'Maybe'].map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => handleRsvpChange(event.id, status)}
+                                            className={`flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-md transition-colors ${
+                                                rsvps[event.id] === status
+                                                    ? 'bg-tertiary text-black'
+                                                    : 'bg-surface-container-highest text-on-surface-variant hover:text-white'
+                                            }`}
+                                        >
+                                            {status}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: Achievements */}
+            {activeTab === 'achievements' && (
+                <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-6 max-w-4xl">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#2A2A2A]">
+                        <Medal className="w-6 h-6 text-tertiary" />
+                        <h3 className="text-white font-bold text-xl">Awards</h3>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {dummyAwards.map(award => (
+                              <div key={award.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
+                                  <Medal className="w-8 h-8 text-yellow-400" />
+                                  <span className="text-white font-bold text-sm">{award.name}</span>
+                              </div>
+                          ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-4 mt-2">
+                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#2A2A2A]">
+                        <Star className="w-6 h-6 text-tertiary" />
+                        <h3 className="text-white font-bold text-xl">Milestones</h3>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {dummyBadges.map(badge => (
+                              <div key={badge.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
+                                  <Shield className="w-8 h-8 text-tertiary" />
+                                  <span className="text-white font-bold text-sm">{badge.name}</span>
+                              </div>
+                          ))}
+                      </div>
+                    </div>
+                </div>
+            )}
         </div>
       </div>
 
@@ -1242,6 +1397,123 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Job Modal */}
+      {jobModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 pointer-events-auto">
+          <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh] relative z-[10000]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white font-display">
+                    {jobModal.jobId ? 'Edit Job / Role' : 'Add Assigned Job / Role'}
+                  </h2>
+                  <p className="text-xs text-on-surface-variant">
+                    {jobModal.jobId ? 'Modify role or team assignment' : 'Add a coaching or administrative role'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setJobModal(prev => ({ ...prev, isOpen: false }))}
+                disabled={savingJob}
+                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">
+                  Job Role / Title *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Head Coach, Assistant Coach, Team Manager, Player"
+                  value={jobModal.jobType}
+                  onChange={e => setJobModal(prev => ({ ...prev, jobType: e.target.value }))}
+                  className="bg-[#050505] border border-[#2A2A2A] rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-tertiary focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">
+                  Club / Organization
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Blackout HC, House League"
+                  value={jobModal.organization}
+                  onChange={e => setJobModal(prev => ({ ...prev, organization: e.target.value }))}
+                  className="bg-[#050505] border border-[#2A2A2A] rounded-lg px-3.5 py-2.5 text-sm text-white focus:border-tertiary focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white">Active Status</span>
+                  <span className="text-xs text-on-surface-variant">Is this role currently active?</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setJobModal(prev => ({ ...prev, isActive: !prev.isActive }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    jobModal.isActive ? 'bg-tertiary' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-black transition-transform ${
+                      jobModal.isActive ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {jobModalError && (
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="flex-1">{jobModalError}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#2A2A2A] bg-surface-container-low flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setJobModal(prev => ({ ...prev, isOpen: false }))}
+                disabled={savingJob}
+                className="px-4 py-2 text-xs font-bold text-on-surface-variant hover:text-white bg-surface-container-high hover:bg-surface-container-highest rounded-lg transition-colors border border-[#2A2A2A]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveJobModal()}
+                disabled={savingJob}
+                className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {savingJob ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Role</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
