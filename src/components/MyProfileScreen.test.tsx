@@ -86,7 +86,6 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
 
     // Modal should be open
     expect(screen.getByText('Change Banner Image')).toBeInTheDocument();
-    expect(screen.getByText('Specify the image URL for your header banner')).toBeInTheDocument();
 
     // Type a new URL
     const urlInput = screen.getByPlaceholderText('https://example.com/banner.jpg');
@@ -128,7 +127,6 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
 
     // Modal should be open
     expect(screen.getByText('Change Profile Picture')).toBeInTheDocument();
-    expect(screen.getByText('Specify the image URL for your profile avatar')).toBeInTheDocument();
 
     // Type new profile avatar URL
     const urlInput = screen.getByPlaceholderText('https://example.com/avatar.jpg');
@@ -166,7 +164,7 @@ describe('MyProfileScreen - Photo & Banner Updates', () => {
     await user.click(editProfileBtn);
 
     // Modal should be open
-    expect(screen.getByText('Update personal, hockey, and federation profile information')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /edit profile/i })).toBeInTheDocument();
 
     // Fill in expanded fields
     const bondsInput = screen.getByPlaceholderText(/e\.g\. IJN-104928/i);

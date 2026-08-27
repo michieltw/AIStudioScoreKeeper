@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, User as UserIcon, Briefcase, Ruler, Shield, Plus, Edit2, Calendar, Star, Medal, Camera, MessageCircle, UserPlus, MoreHorizontal, Image as ImageIcon, Link as LinkIcon, X, Check, Trash2, AlertCircle, Loader2, Flag, Hash, Activity, Eye, ShieldCheck, Globe } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { User, Achievement, Award } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
@@ -542,11 +542,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                <div className="absolute inset-0 bg-gradient-to-tr from-surface-container-high to-tertiary/20"></div>
             )}
 
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <Camera className="w-8 h-8 text-white" />
-            </div>
-
             {canEditPhotos && (
                 <button
                   type="button"
@@ -554,11 +549,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                     e.stopPropagation();
                     handleOpenPhotoModal('cover');
                   }}
-                  className="absolute bottom-3 right-3 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary p-2 rounded-full text-tertiary transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto"
+                  className="absolute bottom-3 right-3 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary px-3 py-1.5 rounded-md text-xs text-white transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto font-medium"
                   title="Change Banner Image"
                   aria-label="Change Banner Image"
                 >
-                    <Camera className="w-4 h-4" />
+                    Change Banner
                 </button>
             )}
         </div>
@@ -581,10 +576,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             className="w-full h-full object-cover rounded-full"
                             referrerPolicy="no-referrer"
                         />
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center rounded-full pointer-events-none">
-                          <Camera className="w-6 h-6 text-white" />
-                        </div>
                         {canEditPhotos && (
                             <button
                               type="button"
@@ -592,11 +583,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                 e.stopPropagation();
                                 handleOpenPhotoModal('profile');
                               }}
-                              className="absolute bottom-2 right-2 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary p-2 rounded-full text-tertiary transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto"
+                              className="absolute bottom-2 right-2 z-30 bg-surface-container-low border border-[#2A2A2A] hover:bg-surface-container-highest hover:border-tertiary px-2 py-1 rounded-md text-xs text-white transition-all shadow-lg active:scale-95 cursor-pointer pointer-events-auto font-medium"
                               title="Change Profile Picture"
                               aria-label="Change Profile Picture"
                             >
-                                <Camera className="w-4 h-4" />
+                                Edit
                             </button>
                         )}
                     </div>
@@ -615,25 +606,22 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                     </div>
                 </div>
 
-                {/* Actions (Facebook Style) */}
+                {/* Actions */}
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto justify-center md:justify-end gap-2 mt-4 md:mb-2 md:mt-0">
                     {isOwnProfile ? (
                         <button
                           onClick={handleOpenEditProfile}
                           className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors w-full sm:w-auto shadow-sm active:scale-95"
                         >
-                            <Edit2 className="w-4 h-4 text-tertiary" /> Edit profile
+                            Edit profile
                         </button>
                     ) : (
                         <div className="flex gap-2 w-full sm:w-auto">
-                            <button onClick={() => alert(`You are now following ${displayName}`)} className="flex-1 sm:flex-none bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                                <UserPlus className="w-4 h-4" /> Follow
+                            <button onClick={() => alert(`You are now following ${displayName}`)} className="flex-1 sm:flex-none bg-tertiary text-black hover:brightness-110 px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center transition-colors">
+                                Follow
                             </button>
-                            <button onClick={() => alert(`Opening chat with ${displayName}...`)} className="flex-1 sm:flex-none bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-colors">
-                                <MessageCircle className="w-4 h-4" /> Message
-                            </button>
-                            <button onClick={() => alert('More options coming soon!')} className="bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-3 py-2 rounded-md transition-colors">
-                                <MoreHorizontal className="w-5 h-5" />
+                            <button onClick={() => alert(`Opening chat with ${displayName}...`)} className="flex-1 sm:flex-none bg-surface-container-low hover:bg-surface-container-highest text-white border border-[#2A2A2A] px-4 py-2 rounded-md font-bold text-sm flex items-center justify-center transition-colors">
+                                Message
                             </button>
                         </div>
                     )}
@@ -714,11 +702,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     {isOwnProfile && (
                                         <button
                                             onClick={handleOpenEditProfile}
-                                            className="text-xs text-on-surface-variant hover:text-white p-1.5 rounded hover:bg-white/5 transition-colors"
+                                            className="text-xs text-tertiary hover:underline font-medium px-1.5 py-0.5"
                                             aria-label="Customize details"
                                             title="Customize details"
                                         >
-                                            <Edit2 className="w-3.5 h-3.5" />
+                                            Edit
                                         </button>
                                     )}
                                 </div>
@@ -728,12 +716,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                 {/* Column 1: Hockey & Athletics */}
                                 <div className="flex flex-col gap-3 p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
-                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold flex items-center gap-1.5 pb-1 border-b border-[#222222]">
-                                        <Activity className="w-3.5 h-3.5 shrink-0" /> Athletics & Ice
+                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold pb-1 border-b border-[#222222]">
+                                        Athletics & Ice
                                     </h4>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Briefcase className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Position</span>
                                             <strong className="text-white font-medium truncate">{profileData?.plays_position || viewedPerson?.plays_position || viewedPerson?.job || viewedPerson?.role || currentUser?.role || "Player"}</strong>
@@ -741,7 +728,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Shield className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Sec. Position</span>
                                             <strong className="text-white font-medium truncate">
@@ -753,7 +739,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Hash className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Jersey #</span>
                                             <strong className="text-white font-medium">{profileData?.jersey_number || viewedPerson?.jersey_number ? `#${profileData?.jersey_number || viewedPerson?.jersey_number}` : '—'}</strong>
@@ -761,7 +746,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">H</div>
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Shoots</span>
                                             <strong className="text-white font-medium">{profileData?.shoots || viewedPerson?.shoots || viewedPerson?.handedness || "Right"}</strong>
@@ -769,7 +753,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Ruler className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Height</span>
                                             <strong className="text-white font-medium">{profileData?.height_cm ? `${profileData.height_cm} cm` : (viewedPerson?.height_cm ? `${viewedPerson.height_cm} cm` : (viewedPerson?.height || "—"))}</strong>
@@ -777,7 +760,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <div className="w-4 text-center font-bold text-xs text-gray-400 shrink-0">W</div>
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Weight</span>
                                             <strong className="text-white font-medium">{profileData?.weight_kg ? `${profileData.weight_kg} kg` : (viewedPerson?.weight_kg ? `${viewedPerson.weight_kg} kg` : (viewedPerson?.weight || "—"))}</strong>
@@ -785,7 +767,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Activity className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Playstyle</span>
                                             <strong className="text-white font-medium truncate">{profileData?.playstyle || viewedPerson?.playstyle || "—"}</strong>
@@ -795,8 +776,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
                                 {/* Column 2: Personal & Federation */}
                                 <div className="flex flex-col gap-3 p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
-                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold flex items-center gap-1.5 pb-1 border-b border-[#222222]">
-                                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> Personal & Federation
+                                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-tertiary font-bold pb-1 border-b border-[#222222]">
+                                        Personal & Federation
                                     </h4>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
@@ -810,7 +791,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Birthdate</span>
                                             <strong className="text-white font-medium truncate">
@@ -822,7 +802,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <UserIcon className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Gender</span>
                                             <strong className="text-white font-medium">{profileData?.gender || viewedPerson?.gender || "Male"}</strong>
@@ -830,7 +809,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">IJN Bondsnummer</span>
                                             <strong className="text-white font-medium font-mono text-xs truncate">{profileData?.ijn_bondsnummer || viewedPerson?.ijn_bondsnummer || "—"}</strong>
@@ -838,7 +816,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Eye className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Visibility</span>
                                             <strong className="text-white font-medium">{profileData?.visibility || viewedPerson?.visibility || "Public"}</strong>
@@ -846,7 +823,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Globe className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Primary Club</span>
                                             <strong className="text-white font-medium truncate">
@@ -856,7 +832,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                     </div>
 
                                     <div className="flex items-center gap-2 text-on-surface-variant">
-                                        <Flag className="w-4 h-4 text-gray-400 shrink-0" />
                                         <div className="flex flex-col min-w-0">
                                             <span className="text-[11px] text-gray-500 leading-tight">Status</span>
                                             <strong className="text-white font-medium">{profileData?.status || viewedPerson?.status || "Active"}</strong>
@@ -875,15 +850,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                 {isOwnProfile && (
                                     <button
                                         onClick={handleOpenEditProfile}
-                                        className="text-xs text-on-surface-variant hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                                        className="text-xs text-tertiary hover:underline font-medium px-1.5 py-0.5"
                                         title="Edit Biography"
                                     >
-                                        <Edit2 className="w-3.5 h-3.5" />
+                                        Edit
                                     </button>
                                 )}
                             </div>
                             <p className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
-                                {profileData?.bio || `Welcome to ${displayName}'s profile. This section includes bio information, favorite quotes, or a summary of their hockey career.`}
+                                {profileData?.bio || '—'}
                             </p>
                         </div>
                     </div>
@@ -894,16 +869,13 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             {activeTab === 'jobs' && (
                 <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-4 max-w-4xl">
                     <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
-                        <div>
-                            <h3 className="text-white font-bold text-xl">Assigned Jobs & Roles</h3>
-                            <p className="text-xs text-on-surface-variant mt-0.5">Manage club appointments, coaching roles, and team assignments</p>
-                        </div>
+                        <h3 className="text-white font-bold text-xl">Assigned Jobs & Roles</h3>
                         {isOwnProfile && (
                             <button
                                 onClick={() => handleOpenJobModal()}
-                                className="bg-tertiary text-black px-3 py-1.5 rounded font-bold text-sm flex items-center gap-1.5 hover:bg-opacity-90 transition-opacity"
+                                className="bg-tertiary text-black px-3 py-1.5 rounded font-bold text-sm hover:bg-opacity-90 transition-opacity"
                             >
-                                <Plus className="w-4 h-4" /> Add Role
+                                Add Role
                             </button>
                         )}
                     </div>
@@ -923,7 +895,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                         </span>
                                     </div>
                                     <div className="text-sm text-on-surface-variant flex items-center gap-2">
-                                        <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                         <span>Organization: <strong className="text-white">{job.organization_id || "No Org Specified"}</strong></span>
                                     </div>
 
@@ -931,15 +902,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                         <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-[#222222]">
                                             <button
                                                 onClick={() => handleOpenJobModal(job)}
-                                                className="text-xs text-tertiary hover:text-white px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A] flex items-center gap-1"
+                                                className="text-xs text-tertiary hover:text-white px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A]"
                                             >
-                                                <Edit2 className="w-3 h-3" /> Edit
+                                                Edit
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveJob(job.id)}
-                                                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A] flex items-center gap-1"
+                                                className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded bg-surface-container-high border border-[#2A2A2A]"
                                             >
-                                                <Trash2 className="w-3 h-3" /> Remove
+                                                Remove
                                             </button>
                                         </div>
                                     )}
@@ -958,16 +929,13 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             {activeTab === 'equipment' && (
                 <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-4 max-w-4xl">
                     <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3">
-                        <div>
-                            <h3 className="text-white font-bold text-xl">Preferred Equipment</h3>
-                            <p className="text-xs text-on-surface-variant mt-0.5">Manage stick parameters, blade curves, and gear preferences</p>
-                        </div>
+                        <h3 className="text-white font-bold text-xl">Preferred Equipment</h3>
                         {isOwnProfile && (
                             <button
                               onClick={() => setIsEditingEquipment(!isEditingEquipment)}
-                              className="text-tertiary hover:underline text-sm font-bold flex items-center gap-1"
+                              className="text-tertiary hover:underline text-sm font-bold"
                             >
-                                <Edit2 className="w-4 h-4" /> {isEditingEquipment ? 'Cancel' : 'Edit Equipment'}
+                                {isEditingEquipment ? 'Cancel' : 'Edit Equipment'}
                             </button>
                         )}
                     </div>
@@ -1142,8 +1110,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                             <div key={event.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
                                     <h4 className="text-white font-bold">{event.title}</h4>
-                                    <p className="text-sm text-on-surface-variant flex items-center gap-1 mt-1">
-                                        <Calendar className="w-4 h-4" /> {event.date}
+                                    <p className="text-sm text-on-surface-variant mt-1">
+                                        {event.date}
                                     </p>
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
@@ -1171,14 +1139,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             {activeTab === 'achievements' && (
                 <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm flex flex-col gap-6 max-w-4xl">
                     <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#2A2A2A]">
-                        <Medal className="w-6 h-6 text-tertiary" />
+                      <div className="mb-2 pb-2 border-b border-[#2A2A2A]">
                         <h3 className="text-white font-bold text-xl">Awards</h3>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {dummyAwards.map(award => (
                               <div key={award.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
-                                  <Medal className="w-8 h-8 text-yellow-400" />
                                   <span className="text-white font-bold text-sm">{award.name}</span>
                               </div>
                           ))}
@@ -1186,14 +1152,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                     </div>
 
                     <div className="flex flex-col gap-4 mt-2">
-                      <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#2A2A2A]">
-                        <Star className="w-6 h-6 text-tertiary" />
+                      <div className="mb-2 pb-2 border-b border-[#2A2A2A]">
                         <h3 className="text-white font-bold text-xl">Milestones</h3>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {dummyBadges.map(badge => (
                               <div key={badge.id} className="bg-surface-container-lowest border border-[#2A2A2A] rounded-md p-4 flex flex-col items-center justify-center gap-2 text-center">
-                                  <Shield className="w-8 h-8 text-tertiary" />
                                   <span className="text-white font-bold text-sm">{badge.name}</span>
                               </div>
                           ))}
@@ -1211,27 +1175,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
-                  <Camera className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white font-display">
-                    {photoModal.type === 'profile' ? 'Change Profile Picture' : 'Change Banner Image'}
-                  </h2>
-                  <p className="text-xs text-on-surface-variant">
-                    {photoModal.type === 'profile' 
-                      ? 'Specify the image URL for your profile avatar' 
-                      : 'Specify the image URL for your header banner'}
-                  </p>
-                </div>
-              </div>
+              <h2 className="text-base font-bold text-white font-display">
+                {photoModal.type === 'profile' ? 'Change Profile Picture' : 'Change Banner Image'}
+              </h2>
               <button
                 onClick={() => setPhotoModal(prev => ({ ...prev, isOpen: false }))}
                 disabled={savingPhoto}
-                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                className="text-on-surface-variant hover:text-white px-2 py-1 rounded text-sm hover:bg-white/5 transition-colors font-mono"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
@@ -1244,7 +1196,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   Image Web URL
                 </label>
                 <div className="relative">
-                  <LinkIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input
                     type="url"
                     value={photoModal.url}
@@ -1254,7 +1205,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                       setPhotoError(null);
                     }}
                     placeholder={photoModal.type === 'profile' ? 'https://example.com/avatar.jpg' : 'https://example.com/banner.jpg'}
-                    className="w-full bg-[#050505] border border-[#2A2A2A] rounded-lg pl-9 pr-9 py-2.5 text-sm text-white focus:outline-none focus:border-tertiary transition-colors font-mono"
+                    className="w-full bg-[#050505] border border-[#2A2A2A] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-tertiary transition-colors font-mono"
                     autoFocus
                   />
                   {photoModal.url && (
@@ -1264,10 +1215,10 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                         setPhotoModal(prev => ({ ...prev, url: '' }));
                         setPreviewError(false);
                       }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white px-1.5 py-0.5 text-xs rounded transition-colors"
                       title="Clear URL"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      ✕
                     </button>
                   )}
                 </div>
@@ -1275,9 +1226,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
               {/* Live Preview Frame */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5 text-tertiary" />
-                  Live Preview
+                <span className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">
+                  Preview
                 </span>
 
                 <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden">
@@ -1295,13 +1245,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                           />
                         </div>
                         {previewError ? (
-                          <div className="flex items-center gap-1.5 text-xs text-error mt-2">
-                            <AlertCircle className="w-3.5 h-3.5" />
+                          <div className="text-xs text-error mt-2">
                             <span>Unable to load image from URL (check link)</span>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-tertiary font-mono mt-2 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Valid image preview
+                          <span className="text-[11px] text-tertiary font-mono mt-2">
+                            Valid image preview
                           </span>
                         )}
                       </div>
@@ -1318,20 +1267,18 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                           />
                         </div>
                         {previewError ? (
-                          <div className="flex items-center gap-1.5 text-xs text-error mt-2">
-                            <AlertCircle className="w-3.5 h-3.5" />
+                          <div className="text-xs text-error mt-2">
                             <span>Unable to load image from URL (check link)</span>
                           </div>
                         ) : (
-                          <span className="text-[11px] text-tertiary font-mono mt-2 flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Valid banner preview
+                          <span className="text-[11px] text-tertiary font-mono mt-2">
+                            Valid banner preview
                           </span>
                         )}
                       </div>
                     )
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center p-4 text-gray-500">
-                      <ImageIcon className="w-10 h-10 mb-2 opacity-40" />
                       <p className="text-xs font-medium">Enter an image URL above</p>
                     </div>
                   )}
@@ -1340,9 +1287,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
               {/* Error Banner */}
               {photoError && (
-                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1">{photoError}</div>
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 text-xs text-error">
+                  {photoError}
                 </div>
               )}
 
@@ -1355,11 +1301,10 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   type="button"
                   onClick={() => handleSavePhoto('')}
                   disabled={savingPhoto}
-                  className="px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-1.5 font-medium disabled:opacity-50"
+                  className="px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors font-medium disabled:opacity-50"
                   title="Remove image and reset to default"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove Image</span>
+                  Remove Image
                 </button>
               ) : (
                 <div />
@@ -1379,18 +1324,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   type="button"
                   onClick={() => handleSavePhoto()}
                   disabled={savingPhoto}
-                  className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                  className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {savingPhoto ? (
-                    <>
+                    <span className="flex items-center gap-1.5">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Saving...</span>
-                    </>
+                    </span>
                   ) : (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Save</span>
-                    </>
+                    <span>Save</span>
                   )}
                 </button>
               </div>
@@ -1406,25 +1348,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
           <div className="bg-[#121212] border border-[#2A2A2A] rounded-xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh] relative z-[10000]">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white font-display">
-                    {jobModal.jobId ? 'Edit Job / Role' : 'Add Assigned Job / Role'}
-                  </h2>
-                  <p className="text-xs text-on-surface-variant">
-                    {jobModal.jobId ? 'Modify role or team assignment' : 'Add a coaching or administrative role'}
-                  </p>
-                </div>
-              </div>
+              <h2 className="text-base font-bold text-white font-display">
+                {jobModal.jobId ? 'Edit Role' : 'Add Role'}
+              </h2>
               <button
                 onClick={() => setJobModal(prev => ({ ...prev, isOpen: false }))}
                 disabled={savingJob}
-                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                className="text-on-surface-variant hover:text-white px-2 py-1 rounded text-sm hover:bg-white/5 transition-colors font-mono"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
@@ -1432,7 +1364,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-mono uppercase tracking-wider text-on-surface-variant">
-                  Job Role / Title *
+                  Role / Title *
                 </label>
                 <input
                   type="text"
@@ -1459,7 +1391,6 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
               <div className="flex items-center justify-between p-3 rounded-lg bg-[#080808]/60 border border-[#222222]">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-white">Active Status</span>
-                  <span className="text-xs text-on-surface-variant">Is this role currently active?</span>
                 </div>
                 <button
                   type="button"
@@ -1477,9 +1408,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
               </div>
 
               {jobModalError && (
-                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1">{jobModalError}</div>
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 text-xs text-error">
+                  {jobModalError}
                 </div>
               )}
             </div>
@@ -1498,18 +1428,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 type="button"
                 onClick={() => handleSaveJobModal()}
                 disabled={savingJob}
-                className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-4 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
               >
                 {savingJob ? (
-                  <>
+                  <span className="flex items-center gap-1.5">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Saving...</span>
-                  </>
+                  </span>
                 ) : (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Save Role</span>
-                  </>
+                  <span>Save Role</span>
                 )}
               </button>
             </div>
@@ -1524,43 +1451,31 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#2A2A2A] bg-surface-container-low">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-tertiary/10 border border-tertiary/20 flex items-center justify-center text-tertiary">
-                  <Edit2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-white font-display">
-                    Edit Profile
-                  </h2>
-                  <p className="text-xs text-on-surface-variant">
-                    Update personal, hockey, and federation profile information
-                  </p>
-                </div>
-              </div>
+              <h2 className="text-base font-bold text-white font-display">
+                Edit Profile
+              </h2>
               <button
                 onClick={() => setIsEditingProfile(false)}
                 disabled={loading}
-                className="text-on-surface-variant hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                className="text-on-surface-variant hover:text-white px-2 py-1 rounded text-sm hover:bg-white/5 transition-colors font-mono"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
             {/* Modal Body */}
             <div className="p-5 flex-1 overflow-y-auto flex flex-col gap-6 text-sm">
               
-              {/* Error Message */}
               {error && (
-                <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-start gap-2.5 text-xs text-error">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <div className="flex-1">{error}</div>
+                <div className="bg-error/10 border border-error/30 rounded-lg p-3 text-xs text-error">
+                  {error}
                 </div>
               )}
 
               {/* Section 1: Basic Identity */}
               <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
-                  <UserIcon className="w-3.5 h-3.5" /> Basic Information & Visibility
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">
+                  Basic Information & Visibility
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -1600,8 +1515,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                       onChange={e => setEditProfileForm({ ...editProfileForm, visibility: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="Public">Public (Visible to everyone)</option>
-                      <option value="Private">Private (Members only)</option>
+                      <option value="Public">Public</option>
+                      <option value="Private">Private</option>
                     </select>
                   </div>
                 </div>
@@ -1609,8 +1524,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
               {/* Section 2: Hockey & Athletic Attributes */}
               <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5" /> Hockey & Athletics
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">
+                  Hockey & Athletics
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1">
@@ -1706,8 +1621,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
               {/* Section 3: Federation & Personal */}
               <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Federation & Demographics
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">
+                  Federation & Demographics
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
@@ -1757,12 +1672,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
 
               {/* Section 4: Biography */}
               <div className="flex flex-col gap-2">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5" /> Biography & Hockey Career
+                <h4 className="text-xs font-mono uppercase tracking-wider text-tertiary font-bold">
+                  Biography
                 </h4>
                 <textarea
                   rows={4}
-                  placeholder="Share details about your hockey background, favorite highlights, career achievements, or personal bio..."
+                  placeholder="Biography..."
                   value={editProfileForm.bio || ''}
                   onChange={e => setEditProfileForm({ ...editProfileForm, bio: e.target.value })}
                   className="bg-[#080808] border border-[#2A2A2A] rounded-lg p-3 text-white focus:border-tertiary focus:outline-none transition-colors resize-y text-sm"
@@ -1786,18 +1701,15 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                 type="button"
                 onClick={handleSaveProfile}
                 disabled={loading}
-                className="px-5 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                className="px-5 py-2 text-xs font-bold bg-tertiary text-black hover:brightness-110 rounded-lg transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
               >
                 {loading ? (
-                  <>
+                  <span className="flex items-center gap-1.5">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Saving...</span>
-                  </>
+                  </span>
                 ) : (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Save Profile</span>
-                  </>
+                  <span>Save Profile</span>
                 )}
               </button>
             </div>
