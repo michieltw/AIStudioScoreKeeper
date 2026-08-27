@@ -79,7 +79,7 @@ const dbSchema = {
   "rosters": ["id", "team_id", "season_id", "roster_name", "roster_status", "created_at", "updated_at"],
   "roster_members": ["id", "roster_id", "person_id", "person_full_name", "jersey_number", "position", "status", "joined_at", "left_at", "created_at"],
   "player_seasons": ["id", "person_id", "season_id", "primary_team_id", "season_role", "created_at", "updated_at"],
-  "free_agents": ["id", "person_id", "season_id", "available_from", "available_to", "asking_price_lower", "asking_price_upper", "notes", "created_at", "updated_at"],
+  "free_agents": ["id", "person_id", "season_id", "status", "previous_team_id", "previous_aav", "years_of_experience", "is_signed", "signed_team_id", "signed_aav", "available_from", "available_to", "asking_price_lower", "asking_price_upper", "notes", "created_at", "updated_at"],
   "lineups": ["id", "game_id", "team_id", "lineup_name", "created_at"],
   "lineup_slots": ["id", "lineup_id", "person_id", "line_number", "position", "created_at"],
   "special_teams": ["id", "team_id", "season_id", "special_team_type", "name", "active_from", "active_to", "created_at"],
