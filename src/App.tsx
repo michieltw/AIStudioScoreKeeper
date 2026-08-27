@@ -9,7 +9,7 @@ import StatsScreen from './components/StatsScreen';
 import EcosystemScreen from './components/Ecosystem/EcosystemScreen';
 import MyProfileScreen from './components/MyProfileScreen';
 import PeopleDirectoryScreen from './components/PeopleDirectoryScreen';
-import TeamProfileScreen from './components/TeamProfileScreen';
+import TeamDirectoryScreen from './components/TeamDirectoryScreen';
 import RosterBuilderScreen from './components/RosterBuilderScreen';
 import FreeAgencyScreen from './components/FreeAgencyScreen';
 import CalendarScreen from './components/CalendarScreen';
@@ -190,9 +190,9 @@ export default function App() {
             Players
           </button>
           <button
-            onClick={() => isTeamManagerPlus && navigateTo('team-profile')}
+            onClick={() => isTeamManagerPlus && navigateTo('team-directory')}
             disabled={!isTeamManagerPlus}
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'team-profile' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'team-directory' ? 'bg-white/10 text-white border border-white/20' : ''}`}
           >
             Teams
           </button>
@@ -405,8 +405,8 @@ export default function App() {
                 <DraftModeScreen onBack={() => setCurrentScreen('main-menu')} />
               )}
 
-              {currentScreen === 'team-profile' && (
-                <TeamProfileScreen onBack={() => setCurrentScreen('main-menu')} />
+              {currentScreen === 'team-directory' && (
+                <TeamDirectoryScreen onBack={() => setCurrentScreen('main-menu')} />
               )}
 
               {currentScreen === 'roster-builder' && (
