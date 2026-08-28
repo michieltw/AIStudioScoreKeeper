@@ -204,21 +204,74 @@ export default function SettingsScreen({ scheduledGameData, contract, onStart, o
         const gasUrl = getGasUrl();
         if (gasUrl) {
           try {
-            // Fetch teams and settings concurrently
-            const teamsPromise = fetchGasData(gasUrl, { action: 'getTeams' }).then(r => r.json()).catch(console.error);
+            // Fetch necessary tables to map roster members to teams
+            const rosterMembersPromise = fetchGasData(gasUrl, { action: 'getEcosystemData', sheetName: 'roster_members' }).then(r => r.json()).catch(console.error);
+            const rostersPromise = fetchGasData(gasUrl, { action: 'getEcosystemData', sheetName: 'rosters' }).then(r => r.json()).catch(console.error);
+            const teamsPromise = fetchGasData(gasUrl, { action: 'getEcosystemData', sheetName: 'teams' }).then(r => r.json()).catch(console.error);
             const settingsPromise = fetchGasData(gasUrl, { action: 'getSettings' }).then(r => r.json()).catch(console.error);
 
-            const [teamsData, data] = await Promise.all([teamsPromise, settingsPromise]);
+            const [rosterMembersObj, rostersObj, teamsObj, data] = await Promise.all([rosterMembersPromise, rostersPromise, teamsPromise, settingsPromise]);
 
-            if (teamsData && Array.isArray(teamsData) && teamsData.length > 1) {
+            const rmData = rosterMembersObj?.status === 'Success' ? rosterMembersObj.data : null;
+            const rostersData = rostersObj?.status === 'Success' ? rostersObj.data : null;
+            const teamsData = teamsObj?.status === 'Success' ? teamsObj.data : null;
+
+            if (rmData && rostersData && teamsData) {
+              // Create mapping from team_id -> team_name
+              const teamIdToName: Record<string, string> = {};
+              if (Array.isArray(teamsData) && teamsData.length > 1) {
+                const tHeaders = teamsData[0];
+                const idIdx = tHeaders.indexOf('id');
+                const nameIdx = tHeaders.indexOf('name');
+                if (idIdx > -1 && nameIdx > -1) {
+                  for (let i = 1; i < teamsData.length; i++) {
+                    teamIdToName[teamsData[i][idIdx]] = teamsData[i][nameIdx];
+                  }
+                }
+              }
+
+              // Create mapping from roster_id -> team_name
+              const rosterIdToTeamName: Record<string, string> = {};
+              if (Array.isArray(rostersData) && rostersData.length > 1) {
+                const rHeaders = rostersData[0];
+                const rIdIdx = rHeaders.indexOf('id');
+                const rTeamIdIdx = rHeaders.indexOf('team_id');
+                if (rIdIdx > -1 && rTeamIdIdx > -1) {
+                  for (let i = 1; i < rostersData.length; i++) {
+                    const teamId = rostersData[i][rTeamIdIdx];
+                    if (teamId && teamIdToName[teamId]) {
+                      rosterIdToTeamName[rostersData[i][rIdIdx]] = teamIdToName[teamId];
+                    }
+                  }
+                }
+              }
+
+              // Build team map using roster_members
               const teamMap: Record<string, Player[]> = {};
-              for (let i = 1; i < teamsData.length; i++) {
-                const row = teamsData[i];
-                if (!row || row.length < 5) continue;
-                const [tName, pId, pName, pNum, pPos] = [row[0] /* roster_id or team mapping */, row[2] /* person_id */, row[3] /* person_full_name */, row[4] /* jersey_number */, row[5] /* position */];
-                if (!tName) continue;
-                if (!teamMap[tName]) teamMap[tName] = [];
-                teamMap[tName].push({ id: pId || Date.now().toString() + i, number: pNum || '', name: pName || '', position: pPos || '' });
+              if (Array.isArray(rmData) && rmData.length > 1) {
+                const rmHeaders = rmData[0];
+                const rmRosterIdIdx = rmHeaders.indexOf('roster_id');
+                const rmPersonIdIdx = rmHeaders.indexOf('person_id');
+                const rmNameIdx = rmHeaders.indexOf('person_full_name');
+                const rmJerseyIdx = rmHeaders.indexOf('jersey_number');
+                const rmPosIdx = rmHeaders.indexOf('position');
+
+                if (rmRosterIdIdx > -1 && rmNameIdx > -1) {
+                  for (let i = 1; i < rmData.length; i++) {
+                    const row = rmData[i];
+                    const rosterId = row[rmRosterIdIdx];
+                    const tName = rosterIdToTeamName[rosterId] || rosterId; // Fallback to roster_id if no team found
+                    if (!tName) continue;
+
+                    if (!teamMap[tName]) teamMap[tName] = [];
+                    teamMap[tName].push({
+                      id: row[rmPersonIdIdx] || Date.now().toString() + i,
+                      number: row[rmJerseyIdx] || '',
+                      name: row[rmNameIdx] || '',
+                      position: row[rmPosIdx] || ''
+                    });
+                  }
+                }
               }
 
               // If the selected homeTeam is in the map, and we haven't overridden it yet from savedConfig, set it

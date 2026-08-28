@@ -219,18 +219,34 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
           </div>
         ) : (
           <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
-            {displayRows.length > 0 ? (
+            {displayRows.length > 0 ? (() => {
+              const displayColumns = [
+                { key: 'position', label: 'POS' },
+                { key: 'team_id', label: 'Team' },
+                { key: 'games_played', label: 'GP' },
+                { key: 'wins', label: 'W' },
+                { key: 'losses', label: 'L' },
+                { key: 'ties', label: 'T' },
+                { key: 'points', label: 'PTS' }
+              ];
+
+              const colIndices = displayColumns.map(c => ({
+                ...c,
+                idx: getColIndex(c.key)
+              })).filter(c => c.idx > -1);
+
+              return (
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-[#121414] border-b border-[#2A2A2A]">
-                    {headers.map((header: string, i: number) => (
+                    {colIndices.map((col, i) => (
                       <th
                         key={i}
-                        onClick={() => handleSort(i)}
+                        onClick={() => handleSort(col.idx)}
                         className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors sticky top-0"
                       >
                         <div className="flex items-center gap-1">
-                          {header}
+                          {col.label}
                           <ArrowUpDown className="w-3 h-3 opacity-30" />
                         </div>
                       </th>
@@ -240,8 +256,9 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
                 <tbody className="divide-y divide-[#2A2A2A]">
                   {displayRows.map((row: any[], i: number) => (
                     <tr key={i} className="hover:bg-white/10 transition-colors">
-                      {row.map((cell: any, j: number) => {
-                        const isTeamColumn = headers[j]?.toLowerCase() === 'team';
+                      {colIndices.map((col, j) => {
+                        const cell = row[col.idx];
+                        const isTeamColumn = col.key === 'team_id';
                         return (
                           <td key={j} className={`p-3 text-sm whitespace-nowrap ${isTeamColumn ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
                             {cell}
@@ -252,7 +269,8 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
                   ))}
                 </tbody>
               </table>
-            ) : (
+              );
+            })() : (
               <div className="p-8 text-center text-gray-500 font-mono text-sm">
                 No standings data found.
               </div>
