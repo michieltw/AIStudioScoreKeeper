@@ -405,18 +405,34 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
           </div>
         ) : (
           <div className="bg-surface-container-low metallic-border rounded-lg overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 inner-glow">
-            {activeTab === 'teams' && displayStandings.length > 0 && (
+            {activeTab === 'teams' && displayStandings.length > 0 && (() => {
+              const headers = displayStandings[0] || [];
+              const displayColumns = [
+                { key: 'position', label: 'POS' },
+                { key: 'team_id', label: 'Team' },
+                { key: 'games_played', label: 'GP' },
+                { key: 'wins', label: 'W' },
+                { key: 'losses', label: 'L' },
+                { key: 'ties', label: 'T' },
+                { key: 'points', label: 'PTS' }
+              ];
+              const colIndices = displayColumns.map(c => ({
+                ...c,
+                idx: headers.indexOf(c.key)
+              })).filter(c => c.idx > -1);
+
+              return (
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#121414] border-b border-[#2A2A2A]">
-                    {(dbSchema['standings'] || displayStandings[0]).map((header: string, i: number) => (
+                    {colIndices.map((col, i) => (
                       <th
                         key={i}
-                        onClick={() => handleSort(i)}
+                        onClick={() => handleSort(col.idx)}
                         className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors"
                       >
                         <div className="flex items-center gap-1">
-                          {header}
+                          {col.label}
                           <ArrowUpDown className="w-3 h-3 opacity-30" />
                         </div>
                       </th>
@@ -426,33 +442,51 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
                 <tbody className="divide-y divide-[#2A2A2A]">
                   {displayStandings.slice(1).map((row: any[], i: number) => (
                     <tr key={i} className="hover:bg-white/10 transition-colors">
-                      {row.map((cell: any, j: number) => (
-                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${j === 0 ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
-                          {cell}
+                      {colIndices.map((col, j) => (
+                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${col.key === 'team_id' ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
+                          {row[col.idx]}
                         </td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
+              );
+            })()}
 
             {activeTab === 'teams' && filteredStandings.length <= 1 && (
               <div className="p-8 text-center text-gray-500 font-mono text-sm">Geen standen gevonden.</div>
             )}
 
-            {activeTab === 'skaters' && displayStats.length > 0 && (
+            {activeTab === 'skaters' && displayStats.length > 0 && (() => {
+              const headers = displayStats[0] || [];
+              const displayColumns = [
+                { key: 'person_full_name', label: 'Player' },
+                { key: 'team_name', label: 'Team' },
+                { key: 'games_played', label: 'GP' },
+                { key: 'goals', label: 'G' },
+                { key: 'assists', label: 'A' },
+                { key: 'points', label: 'PTS' },
+                { key: 'penalties_in_minutes', label: 'PIM' }
+              ];
+              // Fallback to team_id if team_name is missing
+              const colIndices = displayColumns.map(c => ({
+                ...c,
+                idx: headers.indexOf(c.key) > -1 ? headers.indexOf(c.key) : (c.key === 'team_name' ? headers.indexOf('team_id') : -1)
+              })).filter(c => c.idx > -1);
+
+              return (
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#121414] border-b border-[#2A2A2A]">
-                    {(dbSchema['player_stats'] || displayStats[0]).map((header: string, i: number) => (
+                    {colIndices.map((col, i) => (
                       <th
                         key={i}
-                        onClick={() => handleSort(i)}
+                        onClick={() => handleSort(col.idx)}
                         className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors"
                       >
                         <div className="flex items-center gap-1">
-                          {header}
+                          {col.label}
                           <ArrowUpDown className="w-3 h-3 opacity-30" />
                         </div>
                       </th>
@@ -462,33 +496,52 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
                 <tbody className="divide-y divide-[#2A2A2A]">
                   {displayStats.slice(1).map((row: any[], i: number) => (
                     <tr key={i} className="hover:bg-white/10 transition-colors">
-                      {row.map((cell: any, j: number) => (
-                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${j === 0 ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
-                          {cell}
+                      {colIndices.map((col, j) => (
+                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${col.key === 'person_full_name' ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
+                          {row[col.idx]}
                         </td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
+              );
+            })()}
 
             {activeTab === 'skaters' && filteredStats.length <= 1 && (
               <div className="p-8 text-center text-gray-500 font-mono text-sm">Geen speler stats gevonden.</div>
             )}
 
-            {activeTab === 'goalies' && displayGoalies.length > 0 && (
+            {activeTab === 'goalies' && displayGoalies.length > 0 && (() => {
+              const headers = displayGoalies[0] || [];
+              const displayColumns = [
+                { key: 'person_full_name', label: 'Player' },
+                { key: 'team_name', label: 'Team' },
+                { key: 'games_played', label: 'GP' },
+                { key: 'wins', label: 'W' },
+                { key: 'losses', label: 'L' },
+                { key: 'ties', label: 'T' },
+                { key: 'goals_against_average', label: 'GAA' },
+                { key: 'save_percentage', label: 'SV%' }
+              ];
+              // Fallback to team_id if team_name is missing
+              const colIndices = displayColumns.map(c => ({
+                ...c,
+                idx: headers.indexOf(c.key) > -1 ? headers.indexOf(c.key) : (c.key === 'team_name' ? headers.indexOf('team_id') : -1)
+              })).filter(c => c.idx > -1);
+
+              return (
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#121414] border-b border-[#2A2A2A]">
-                    {(dbSchema['goalie_stats'] || displayGoalies[0]).map((header: string, i: number) => (
+                    {colIndices.map((col, i) => (
                       <th
                         key={i}
-                        onClick={() => handleSort(i)}
+                        onClick={() => handleSort(col.idx)}
                         className="p-3 text-xs font-mono font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:bg-white/5 transition-colors"
                       >
                         <div className="flex items-center gap-1">
-                          {header}
+                          {col.label}
                           <ArrowUpDown className="w-3 h-3 opacity-30" />
                         </div>
                       </th>
@@ -498,16 +551,17 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
                 <tbody className="divide-y divide-[#2A2A2A]">
                   {displayGoalies.slice(1).map((row: any[], i: number) => (
                     <tr key={i} className="hover:bg-white/10 transition-colors">
-                      {row.map((cell: any, j: number) => (
-                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${j === 0 ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
-                          {cell}
+                      {colIndices.map((col, j) => (
+                        <td key={j} className={`p-3 text-sm whitespace-nowrap ${col.key === 'person_full_name' ? 'font-bold text-white' : 'text-gray-300 font-mono'}`}>
+                          {col.key === 'save_percentage' ? Number(row[col.idx]).toFixed(3).replace(/^0+/, '') : row[col.idx]}
                         </td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
+              );
+            })()}
 
             {activeTab === 'goalies' && filteredGoalies.length <= 1 && (
               <div className="p-8 text-center text-gray-500 font-mono text-sm">Geen goalie stats gevonden.</div>
