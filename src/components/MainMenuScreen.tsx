@@ -37,40 +37,46 @@ export default function MainMenuScreen({
       if (gasUrl) {
         try {
           // Fetch scheduled games
-          const scheduledRes = await fetchGasData(gasUrl, { action: 'getScheduledGames' });
-          const scheduledData = await scheduledRes.json();
-          if (Array.isArray(scheduledData) && scheduledData.length > 1) {
-            const mapped = scheduledData.slice(1).map((row, i) => ({
-              id: row[0] || Date.now().toString() + i,
-              homeTeam: row[1] || '',
-              awayTeam: row[2] || '',
-              date: row[3] || '',
-              time: row[4] || '',
-              location: row[5] || '',
-              competition: row[6] || '',
-              matchType: row[7] || ''
-            })).filter(g => g.homeTeam && g.awayTeam);
-            if (mapped.length > 0) {
-              setScheduledGames(mapped);
-            }
-          }
+          const gamesRes = await fetchGasData(gasUrl, { action: 'getEcosystemData', sheetName: 'games' });
+          const gamesResData = await gamesRes.json();
+          const gamesData = gamesResData.data || gamesResData;
+          const headers = gamesData[0] || [];
+          const statusIdx = headers.indexOf('status');
 
-          // Fetch past games
-          const gamesRes = await fetchGasData(gasUrl, { action: 'getGames' });
-          const gamesData = await gamesRes.json();
-          if (Array.isArray(gamesData) && gamesData.length > 1) {
-             const mappedGames = gamesData.slice(1).map((row, i) => ({
-                id: row[0] || `past-${Date.now()}-${i}`,
-                date: row[1] || '',
-                homeTeam: row[2] || '',
-                awayTeam: row[3] || '',
-                homeScore: row[4] !== undefined ? row[4] : '',
-                awayScore: row[5] !== undefined ? row[5] : '',
-                location: row[8] || ''
-             })).filter(g => g.homeTeam && g.awayTeam);
-             if (mappedGames.length > 0) {
-                setPastGames(mappedGames);
-             }
+          if (gamesData.length > 1) {
+            const rows = gamesData.slice(1);
+
+            const idIdx = headers.indexOf('id');
+            const homeTeamIdx = headers.indexOf('home_team_id');
+            const awayTeamIdx = headers.indexOf('away_team_id');
+            const scheduledAtIdx = headers.indexOf('scheduled_at');
+            const venueIdx = headers.indexOf('venue_id');
+            const homeScoreIdx = headers.indexOf('home_score');
+            const awayScoreIdx = headers.indexOf('away_score');
+
+            const scheduled = rows.filter((r: any) => r[statusIdx] === 'scheduled').map((row: any[]) => ({
+              id: row[idIdx],
+              homeTeam: row[homeTeamIdx],
+              awayTeam: row[awayTeamIdx],
+              date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',
+              time: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[1]?.substring(0,5) || '' : '',
+              location: row[venueIdx],
+              competition: '',
+              matchType: 'Game'
+            }));
+
+            const completed = rows.filter((r: any) => r[statusIdx] === 'completed').map((row: any[]) => ({
+              id: row[idIdx],
+              date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',
+              homeTeam: row[homeTeamIdx],
+              awayTeam: row[awayTeamIdx],
+              homeScore: row[homeScoreIdx],
+              awayScore: row[awayScoreIdx],
+              location: row[venueIdx]
+            }));
+
+            setScheduledGames(scheduled);
+            setPastGames(completed);
           }
 
         } catch (e) {}
