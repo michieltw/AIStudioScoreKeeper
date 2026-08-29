@@ -47,11 +47,48 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
       }
 
       try {
-        const standingsRes = await fetchGasData(`${gasUrl}`, { action: 'getStandings' });
-        const standingsData = await standingsRes.json();
+        const standingsRes = await fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'standings' });
+        const standingsResData = await standingsRes.json();
+        const standingsData = standingsResData.data || standingsResData;
 
         // GAS returns array of arrays including header
-        setStandings(ensure2DArray(standingsData));
+
+        const sData = ensure2DArray(standingsData);
+        if (sData.length > 0) {
+            const headers = sData[0];
+            const seasonIdx = headers.indexOf('season_id');
+            const divisionIdx = headers.indexOf('tier_id');
+            const teamIdx = headers.indexOf('team_id');
+            const gpIdx = headers.indexOf('games_played');
+            const winsIdx = headers.indexOf('wins');
+            const lossesIdx = headers.indexOf('losses');
+            const tiesIdx = headers.indexOf('ties');
+            const pointsIdx = headers.indexOf('points');
+            const posIdx = headers.indexOf('position');
+
+            const mapped = [
+                ['Team', 'Season', 'Division', 'GP', 'W', 'L', 'OTL', 'PTS', 'position']
+            ];
+
+            for (let i = 1; i < sData.length; i++) {
+                const row = sData[i];
+                mapped.push([
+                    row[teamIdx],
+                    row[seasonIdx],
+                    row[divisionIdx],
+                    row[gpIdx],
+                    row[winsIdx],
+                    row[lossesIdx],
+                    row[tiesIdx],
+                    row[pointsIdx],
+                    row[posIdx]
+                ]);
+            }
+            setStandings(mapped);
+        } else {
+            setStandings(sData);
+        }
+
       } catch (e: any) {
         setError('Fout bij het ophalen van gegevens: ' + e.message);
       } finally {

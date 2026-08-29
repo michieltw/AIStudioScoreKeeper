@@ -62,16 +62,56 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
 
       try {
         const [standingsRes, statsRes, goaliesRes] = await Promise.all([
-          fetchGasData(`${gasUrl}`, { action: 'getStandings' }),
-          fetchGasData(`${gasUrl}`, { action: 'getStats' }),
-          fetchGasData(`${gasUrl}`, { action: 'getGoalieStats' }).catch(() => null)
+          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'standings' }),
+          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'player_stats' }),
+          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'goalie_stats' }).catch(() => null)
         ]);
 
-        const standingsRaw = await standingsRes.json();
-        const statsRaw = await statsRes.json();
+        const standingsResData = await standingsRes.json();
+        const standingsRaw = standingsResData.data || standingsResData;
+        const statsResData = await statsRes.json();
+        const statsRawUnmapped = statsResData.data || statsResData;
+        let statsRaw = statsRawUnmapped;
+        if (statsRawUnmapped.length > 0) {
+             const headers = statsRawUnmapped[0];
+             const pNameIdx = headers.indexOf('person_full_name');
+             const tNameIdx = headers.indexOf('team_name');
+             const gpIdx = headers.indexOf('games_played');
+             const gIdx = headers.indexOf('goals');
+             const aIdx = headers.indexOf('assists');
+             const ptsIdx = headers.indexOf('points');
+             const pimIdx = headers.indexOf('penalties_in_minutes');
+             if (pNameIdx !== -1) {
+                 statsRaw = [['Player', 'Team', 'GP', 'G', 'A', 'PTS', 'PIM']];
+                 for(let i=1; i<statsRawUnmapped.length; i++){
+                      const r = statsRawUnmapped[i];
+                      statsRaw.push([r[pNameIdx], r[tNameIdx], r[gpIdx], r[gIdx], r[aIdx], r[ptsIdx], r[pimIdx]]);
+                 }
+             }
+        }
         let goaliesRaw: any = [];
         if (goaliesRes && goaliesRes.ok) {
-          goaliesRaw = await goaliesRes.json();
+          const goaliesResData = await goaliesRes.json();
+          const goaliesRawUnmapped = goaliesResData.data || goaliesResData;
+          goaliesRaw = goaliesRawUnmapped;
+          if (goaliesRawUnmapped.length > 0) {
+             const headers = goaliesRawUnmapped[0];
+             const pNameIdx = headers.indexOf('person_full_name');
+             const tNameIdx = headers.indexOf('team_name');
+             const gpIdx = headers.indexOf('games_played');
+             const wIdx = headers.indexOf('wins');
+             const lIdx = headers.indexOf('losses');
+             const tIdx = headers.indexOf('ties');
+             const gaaIdx = headers.indexOf('goals_against_average');
+             const svpIdx = headers.indexOf('save_percentage');
+             if (pNameIdx !== -1) {
+                 goaliesRaw = [['Player', 'Team', 'GP', 'W', 'L', 'T', 'GAA', 'SV%']];
+                 for(let i=1; i<goaliesRawUnmapped.length; i++){
+                      const r = goaliesRawUnmapped[i];
+                      goaliesRaw.push([r[pNameIdx], r[tNameIdx], r[gpIdx], r[wIdx], r[lIdx], r[tIdx], r[gaaIdx], r[svpIdx]]);
+                 }
+             }
+          }
         }
 
         // The GAS script returns a 2D array representing rows, including the header.
