@@ -227,8 +227,6 @@ export default function GameSummaryModal({
 
         await fetchGasData(gasUrl, {
           action: 'saveGame',
-          logs,
-          game,
           newSchema: {
             games: [{
               id: game.GameID || Date.now().toString(),
@@ -248,7 +246,11 @@ export default function GameSummaryModal({
               trigger_team_id: l.Team,
               description: l.Description,
               x_coordinate: l.X,
-              y_coordinate: l.Y
+              y_coordinate: l.Y,
+              trigger_player_id: l.Player,
+              first_assist_player_id: l.Assist1,
+              second_assist_player_id: l.Assist2,
+              penalty_duration: l.PenaltyMinutes
             }))
           },
           token: import.meta.env.VITE_GAS_TOKEN

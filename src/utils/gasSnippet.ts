@@ -341,63 +341,90 @@ export const generateGasCodeSnippet = (token: string) => `function setupSheet() 
 
 function calculateStandingsAndStats() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const gamesSheet = ss.getSheetByName("Games");
-  const logsSheet = ss.getSheetByName("ActionLogs");
-  const standingsSheet = ss.getSheetByName("Standings");
-  const statsSheet = ss.getSheetByName("PlayerStats");
+  const gamesSheet = ss.getSheetByName("games");
+  const eventsSheet = ss.getSheetByName("game_events");
+  const teamsSheet = ss.getSheetByName("teams");
 
-  const newStandingsSheet = ss.getSheetByName("standings");
-  const newStatsSheet = ss.getSheetByName("player_stats");
+  let standingsSheet = ss.getSheetByName("standings");
+  if (!standingsSheet) {
+    standingsSheet = ss.insertSheet("standings");
+    standingsSheet.appendRow(dbSchema["standings"]);
+    standingsSheet.getRange(1, 1, 1, dbSchema["standings"].length).setFontWeight("bold");
+  }
 
-  if (!gamesSheet || !logsSheet || !standingsSheet || !statsSheet) return;
+  let statsSheet = ss.getSheetByName("player_stats");
+  if (!statsSheet) {
+    statsSheet = ss.insertSheet("player_stats");
+    statsSheet.appendRow(dbSchema["player_stats"]);
+    statsSheet.getRange(1, 1, 1, dbSchema["player_stats"].length).setFontWeight("bold");
+  }
+
+  if (!gamesSheet || !eventsSheet) return;
 
   const gamesData = gamesSheet.getDataRange().getValues();
-  const logsData = logsSheet.getDataRange().getValues();
+  const eventsData = eventsSheet.getDataRange().getValues();
+  const teamsData = teamsSheet ? teamsSheet.getDataRange().getValues() : [];
+
+  if (gamesData.length <= 1) return;
+
+  // Build team tier mapping
+  const teamTiers = {};
+  if (teamsData.length > 1) {
+    const tHeaders = teamsData[0];
+    const idIdx = tHeaders.indexOf('id');
+    const tierIdx = tHeaders.indexOf('tier_id');
+    if (idIdx > -1 && tierIdx > -1) {
+      for (let i = 1; i < teamsData.length; i++) {
+        teamTiers[teamsData[i][idIdx]] = teamsData[i][tierIdx];
+      }
+    }
+  }
+
+  const gHeaders = gamesData[0];
+  const gIdIdx = gHeaders.indexOf('id');
+  const gHomeTeamIdx = gHeaders.indexOf('home_team_id');
+  const gAwayTeamIdx = gHeaders.indexOf('away_team_id');
+  const gHomeScoreIdx = gHeaders.indexOf('home_score');
+  const gAwayScoreIdx = gHeaders.indexOf('away_score');
+  const gStatusIdx = gHeaders.indexOf('status');
+  const gSeasonIdx = gHeaders.indexOf('season_id');
 
   // Calculate Standings
   const standings = {};
-  // Skip header
+
   for (let i = 1; i < gamesData.length; i++) {
     const row = gamesData[i];
-    const gameId = row[0];
-    if (!gameId) continue;
+    const gameId = row[gIdIdx];
+    const status = row[gStatusIdx];
+    if (!gameId || status !== 'completed') continue;
 
-    const homeTeam = row[2];
-    const awayTeam = row[3];
-    const homeScore = parseInt(row[4]) || 0;
-    const awayScore = parseInt(row[5]) || 0;
-    const isOfficial = row[10] === true || row[10] === 'true' || row[10] === 'TRUE';
-    const season = row[11] || 'All';
-    const division = row[12] || 'All';
+    const homeTeam = row[gHomeTeamIdx];
+    const awayTeam = row[gAwayTeamIdx];
+    const homeScore = parseInt(row[gHomeScoreIdx]) || 0;
+    const awayScore = parseInt(row[gAwayScoreIdx]) || 0;
+    const season = row[gSeasonIdx] || 'current';
 
-    if (!isOfficial) continue;
+    const homeTier = teamTiers[homeTeam] || 'All';
+    const awayTier = teamTiers[awayTeam] || 'All';
 
-    const homeKey = homeTeam + '|' + season + '|' + division;
-    const awayKey = awayTeam + '|' + season + '|' + division;
+    const homeKey = homeTeam + '|' + season + '|' + homeTier;
+    const awayKey = awayTeam + '|' + season + '|' + awayTier;
 
-    if (!standings[homeKey]) standings[homeKey] = { Team: homeTeam, Season: season, Division: division, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
-    if (!standings[awayKey]) standings[awayKey] = { Team: awayTeam, Season: season, Division: division, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0, ROW: 0, GF: 0, GA: 0 };
+    if (!standings[homeKey]) standings[homeKey] = { Team: homeTeam, Season: season, Tier: homeTier, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0 };
+    if (!standings[awayKey]) standings[awayKey] = { Team: awayTeam, Season: season, Tier: awayTier, GP: 0, W: 0, L: 0, OTL: 0, PTS: 0 };
 
     standings[homeKey].GP++;
     standings[awayKey].GP++;
 
-    standings[homeKey].GF += homeScore;
-    standings[homeKey].GA += awayScore;
-    standings[awayKey].GF += awayScore;
-    standings[awayKey].GA += homeScore;
-
     if (homeScore > awayScore) {
       standings[homeKey].W++;
       standings[homeKey].PTS += 2;
-      standings[homeKey].ROW++;
-      standings[awayKey].L++; // Simplification: OTL requires knowing if game went to OT
+      standings[awayKey].L++;
     } else if (awayScore > homeScore) {
       standings[awayKey].W++;
       standings[awayKey].PTS += 2;
-      standings[awayKey].ROW++;
       standings[homeKey].L++;
     } else {
-      // Tie
       standings[homeKey].OTL++;
       standings[homeKey].PTS += 1;
       standings[awayKey].OTL++;
@@ -405,158 +432,123 @@ function calculateStandingsAndStats() {
     }
   }
 
-  // Clear and write standings
-  standingsSheet.getRange(2, 1, standingsSheet.getLastRow() || 2, 12).clearContent();
-  const standingsArray = Object.keys(standings).map(key => {
+  standingsSheet.getRange(2, 1, Math.max(1, standingsSheet.getLastRow() - 1), dbSchema["standings"].length).clearContent();
+  const newStandingsArray = Object.keys(standings).map(key => {
     const s = standings[key];
-    return [s.Team, s.Season, s.Division, s.GP, s.W, s.L, s.OTL, s.PTS, s.ROW, s.GF, s.GA, s.GF - s.GA];
+    return [
+      Utilities.getUuid(), // id
+      s.Season, // season_id
+      s.Tier, // tier_id
+      s.Team, // team_id
+      s.GP, // games_played
+      s.W, // wins
+      s.L, // losses
+      s.OTL, // ties
+      s.PTS, // points
+      0, // position
+      new Date().toISOString() // updated_at
+    ];
   });
-  // Sort by PTS descending, then ROW, then DIFF
-  standingsArray.sort((a, b) => b[7] - a[7] || b[8] - a[8] || b[11] - a[11]);
-  if (standingsArray.length > 0) {
-    standingsSheet.getRange(2, 1, standingsArray.length, 12).setValues(standingsArray);
-  }
 
-  if (newStandingsSheet) {
-    newStandingsSheet.getRange(2, 1, Math.max(1, newStandingsSheet.getLastRow() - 1), 11).clearContent();
-    const newStandingsArray = Object.keys(standings).map(key => {
-      const s = standings[key];
-      return [
-        Utilities.getUuid(), // id
-        s.Season, // season_id
-        s.Division, // tier_id
-        s.Team, // team_id
-        s.GP, // games_played
-        s.W, // wins
-        s.L, // losses
-        s.OTL, // ties
-        s.PTS, // points
-        0, // position
-        new Date().toISOString() // updated_at
-      ];
-    });
-    newStandingsArray.sort((a, b) => b[8] - a[8]);
-    newStandingsArray.forEach((row, idx) => {
-      row[9] = idx + 1; // Set position
-    });
-    if (newStandingsArray.length > 0) {
-      newStandingsSheet.getRange(2, 1, newStandingsArray.length, 11).setValues(newStandingsArray);
-    }
+  newStandingsArray.sort((a, b) => b[8] - a[8]);
+  newStandingsArray.forEach((row, idx) => {
+    row[9] = idx + 1; // Set position
+  });
+
+  if (newStandingsArray.length > 0) {
+    standingsSheet.getRange(2, 1, newStandingsArray.length, dbSchema["standings"].length).setValues(newStandingsArray);
   }
 
   // Calculate Player Stats
   const stats = {};
-  const playerTeams = {}; // Track team per player
-  const gamesPlayedByTeam = {}; // Cache games played
+  const playerTeams = {};
+  const gamesPlayedByTeam = {};
 
-  for (let team in standings) {
-    gamesPlayedByTeam[team] = standings[team].GP;
+  for (let key in standings) {
+    gamesPlayedByTeam[standings[key].Team] = standings[key].GP;
   }
 
-  // Skip header
-  for (let i = 1; i < logsData.length; i++) {
-    const row = logsData[i];
-    const eventType = row[5];
-    const team = row[6];
-    const player = row[10];
-    const assist1 = row[11];
-    const assist2 = row[12];
-    const penaltyMinutes = parseInt(row[14]) || 0;
+  if (eventsData.length > 1) {
+    const eHeaders = eventsData[0];
+    const eTypeIdx = eHeaders.indexOf('trigger_event_type');
+    const eTeamIdx = eHeaders.indexOf('trigger_team_id');
+    const ePlayerIdx = eHeaders.indexOf('trigger_player_id');
+    const eAssist1Idx = eHeaders.indexOf('first_assist_player_id');
+    const eAssist2Idx = eHeaders.indexOf('second_assist_player_id');
+    const ePenaltyDurIdx = eHeaders.indexOf('penalty_duration');
 
-    if (!player || player === 'Speler') continue;
+    for (let i = 1; i < eventsData.length; i++) {
+      const row = eventsData[i];
+      const eventType = row[eTypeIdx];
+      const team = row[eTeamIdx];
+      const player = row[ePlayerIdx];
+      const assist1 = row[eAssist1Idx];
+      const assist2 = row[eAssist2Idx];
+      const penaltyMinutes = parseInt(row[ePenaltyDurIdx]) || 0;
 
-    if (!stats[player]) {
-      stats[player] = { G: 0, A: 0, PTS: 0, PIM: 0 };
-    }
-    playerTeams[player] = team;
+      if (!player || player === 'Speler') continue;
 
-    if (eventType === 'goal') {
-      stats[player].G++;
-      stats[player].PTS++;
-
-      if (assist1 && assist1 !== 'Speler') {
-        if (!stats[assist1]) stats[assist1] = { G: 0, A: 0, PTS: 0, PIM: 0 };
-        stats[assist1].A++;
-        stats[assist1].PTS++;
-        playerTeams[assist1] = team;
+      if (!stats[player]) {
+        stats[player] = { G: 0, A: 0, PTS: 0, PIM: 0 };
       }
-      if (assist2 && assist2 !== 'Speler') {
-        if (!stats[assist2]) stats[assist2] = { G: 0, A: 0, PTS: 0, PIM: 0 };
-        stats[assist2].A++;
-        stats[assist2].PTS++;
-        playerTeams[assist2] = team;
+      playerTeams[player] = team;
+
+      if (eventType === 'goal') {
+        stats[player].G++;
+        stats[player].PTS++;
+
+        if (assist1 && assist1 !== 'Speler') {
+          if (!stats[assist1]) stats[assist1] = { G: 0, A: 0, PTS: 0, PIM: 0 };
+          stats[assist1].A++;
+          stats[assist1].PTS++;
+          playerTeams[assist1] = team;
+        }
+        if (assist2 && assist2 !== 'Speler') {
+          if (!stats[assist2]) stats[assist2] = { G: 0, A: 0, PTS: 0, PIM: 0 };
+          stats[assist2].A++;
+          stats[assist2].PTS++;
+          playerTeams[assist2] = team;
+        }
+      } else if (eventType === 'penalty') {
+        stats[player].PIM += penaltyMinutes;
       }
-    } else if (eventType === 'penalty') {
-      stats[player].PIM += penaltyMinutes;
     }
   }
 
-  // Clear and write stats
-  statsSheet.getRange(2, 1, statsSheet.getLastRow() || 2, 7).clearContent();
-  const statsArray = Object.keys(stats).map(player => {
+  statsSheet.getRange(2, 1, Math.max(1, statsSheet.getLastRow() - 1), dbSchema["player_stats"].length).clearContent();
+  const newStatsArray = Object.keys(stats).map(player => {
     const s = stats[player];
     const team = playerTeams[player] || '';
     const gp = gamesPlayedByTeam[team] || 0;
-    return [player, team, gp, s.G, s.A, s.PTS, s.PIM];
+    return [
+      Utilities.getUuid(), // id
+      "current", // season_id
+      "", // person_id
+      team, // team_id
+      player, // person_full_name
+      team, // team_name
+      gp, // games_played
+      s.G, // goals
+      s.A, // assists
+      s.PTS, // points
+      0, // plus_minus
+      s.PIM, // penalties_in_minutes
+      0, // shots
+      0, // hits
+      0, // blocks
+      new Date().toISOString(), // created_at
+      new Date().toISOString() // updated_at
+    ];
   });
-  // Sort by PTS descending
-  statsArray.sort((a, b) => b[5] - a[5] || b[3] - a[3]); // PTS, then G
-  if (statsArray.length > 0) {
-    statsSheet.getRange(2, 1, statsArray.length, 7).setValues(statsArray);
-  }
 
-  if (newStatsSheet) {
-    newStatsSheet.getRange(2, 1, Math.max(1, newStatsSheet.getLastRow() - 1), 17).clearContent();
-    const newStatsArray = Object.keys(stats).map(player => {
-      const s = stats[player];
-      const team = playerTeams[player] || '';
-      const gp = gamesPlayedByTeam[team] || 0;
-      return [
-        Utilities.getUuid(), // id
-        "current", // season_id
-        "", // person_id
-        team, // team_id
-        player, // person_full_name
-        team, // team_name
-        gp, // games_played
-        s.G, // goals
-        s.A, // assists
-        s.PTS, // points
-        0, // plus_minus
-        s.PIM, // penalties_in_minutes
-        0, // shots
-        0, // hits
-        0, // blocks
-        new Date().toISOString(), // created_at
-        new Date().toISOString() // updated_at
-      ];
-    });
-    newStatsArray.sort((a, b) => b[9] - a[9] || b[7] - a[7]);
-    if (newStatsArray.length > 0) {
-      newStatsSheet.getRange(2, 1, newStatsArray.length, 17).setValues(newStatsArray);
-    }
+  newStatsArray.sort((a, b) => b[9] - a[9] || b[7] - a[7]);
+  if (newStatsArray.length > 0) {
+    statsSheet.getRange(2, 1, newStatsArray.length, dbSchema["player_stats"].length).setValues(newStatsArray);
   }
 }
 
 function doGet(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const action = e.parameter.action;
-
-  if (action === 'getSettings') {
-    const sheet = ss.getSheetByName("Settings");
-    if (!sheet) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
-    const data = sheet.getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-  }
-
-  if (action === 'getTeams') {
-    const sheet = ss.getSheetByName("Teams");
-    if (!sheet) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
-    const data = sheet.getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
-  }
-
-  return ContentService.createTextOutput(JSON.stringify({error: "Unknown action"})).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify({error: "GET requests are not supported"})).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -650,63 +642,36 @@ function doPost(e) {
     if (data.action === 'getSettings') {
       const sheet = ss.getSheetByName("Settings");
       const values = sheet ? sheet.getDataRange().getValues() : [];
-      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({status: "Success", data: values})).setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (data.action === 'getTeams') {
-      const sheet = ss.getSheetByName("Teams");
-      const values = sheet ? sheet.getDataRange().getValues() : [];
-      return ContentService.createTextOutput(JSON.stringify(values)).setMimeType(ContentService.MimeType.JSON);
-    }
-
-
-
-    if (data.action === 'saveGame' || data.logs) {
-      const logsSheet = ss.getSheetByName("ActionLogs");
-      if (!logsSheet) throw new Error("ActionLogs sheet niet gevonden");
-
-      if (data.logs && Array.isArray(data.logs)) {
-        data.logs.forEach(log => {
-          logsSheet.appendRow([
-            log.GameID, log.Date, log.HomeTeam, log.AwayTeam,
-            log.Timestamp, log.EventType, log.Team, log.Description,
-            log.X, log.Y, log.Player, log.Assist1, log.Assist2, log.PenaltyReason, log.PenaltyMinutes, log.EventID || ''
-          ].map(sanitizeField));
-        });
-      }
-
-      if (data.game) {
-        const gamesSheet = ss.getSheetByName("Games");
-        if (gamesSheet) {
-          const g = data.game;
-          gamesSheet.appendRow([
-            g.GameID, g.Date, g.HomeTeam, g.AwayTeam,
-            g.HomeScore, g.AwayScore, g.HomeSOG, g.AwaySOG, g.Location, g.EventID || '', g.IsOfficial ? 'TRUE' : 'FALSE',
-            g.Season || 'All', g.Division || 'All'
-          ].map(sanitizeField));
-        }
-      }
-
+    if (data.action === 'saveGame') {
       if (data.newSchema) {
         if (data.newSchema.games) {
-          const gamesSheet = ss.getSheetByName("games");
-          if (gamesSheet) {
-            const headers = dbSchema["games"];
-            data.newSchema.games.forEach(g => {
-              const row = headers.map(h => sanitizeField(g[h] || ''));
-              gamesSheet.appendRow(row);
-            });
+          let gamesSheet = ss.getSheetByName("games");
+          if (!gamesSheet) {
+             gamesSheet = ss.insertSheet("games");
+             gamesSheet.appendRow(dbSchema["games"]);
+             gamesSheet.getRange(1, 1, 1, dbSchema["games"].length).setFontWeight("bold");
           }
+          const headers = dbSchema["games"];
+          data.newSchema.games.forEach(g => {
+            const row = headers.map(h => sanitizeField(g[h] || ''));
+            gamesSheet.appendRow(row);
+          });
         }
         if (data.newSchema.game_events) {
-          const eventsSheet = ss.getSheetByName("game_events");
-          if (eventsSheet) {
-            const headers = dbSchema["game_events"];
-            data.newSchema.game_events.forEach(e => {
-              const row = headers.map(h => sanitizeField(e[h] || ''));
-              eventsSheet.appendRow(row);
-            });
+          let eventsSheet = ss.getSheetByName("game_events");
+          if (!eventsSheet) {
+             eventsSheet = ss.insertSheet("game_events");
+             eventsSheet.appendRow(dbSchema["game_events"]);
+             eventsSheet.getRange(1, 1, 1, dbSchema["game_events"].length).setFontWeight("bold");
           }
+          const headers = dbSchema["game_events"];
+          data.newSchema.game_events.forEach(e => {
+            const row = headers.map(h => sanitizeField(e[h] || ''));
+            eventsSheet.appendRow(row);
+          });
         }
       }
 
