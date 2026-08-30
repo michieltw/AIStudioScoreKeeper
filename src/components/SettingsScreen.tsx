@@ -210,11 +210,14 @@ export default function SettingsScreen({ scheduledGameData, contract, onStart, o
             const teamsPromise = fetchGasData(gasUrl, { action: 'getEcosystemData', sheetName: 'teams' }).then(r => r.json()).catch(console.error);
             const settingsPromise = fetchGasData(gasUrl, { action: 'getSettings' }).then(r => r.json()).catch(console.error);
 
-            const [rosterMembersObj, rostersObj, teamsObj, data] = await Promise.all([rosterMembersPromise, rostersPromise, teamsPromise, settingsPromise]);
+            const [rosterMembersObj, rostersObj, teamsObj, settingsObj] = await Promise.all([rosterMembersPromise, rostersPromise, teamsPromise, settingsPromise]);
 
             const rmData = rosterMembersObj?.status === 'Success' ? rosterMembersObj.data : null;
             const rostersData = rostersObj?.status === 'Success' ? rostersObj.data : null;
             const teamsData = teamsObj?.status === 'Success' ? teamsObj.data : null;
+
+            // Standardize settings data format based on whether it is new formatted response or old format
+            const data = settingsObj?.status === 'Success' ? settingsObj.data : settingsObj;
 
             if (rmData && rostersData && teamsData) {
               // Create mapping from team_id -> team_name
