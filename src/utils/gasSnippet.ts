@@ -559,6 +559,15 @@ function doPost(e) {
     // Parse the data
     const data = JSON.parse(e.postData.contents);
 
+    // Validate token
+    if (data.token !== SECRET_TOKEN) {
+      return ContentService.createTextOutput(JSON.stringify({error: "Unauthorized: Invalid or missing token"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (data.action === 'testConnection') {
+      return ContentService.createTextOutput(JSON.stringify({status: "Success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Sanitize input to prevent formula injection
     const sanitizeField = (value) => {
       if (typeof value === 'string' && value.match(/^[=+\-@]/)) {

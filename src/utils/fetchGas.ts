@@ -29,6 +29,14 @@ export const fetchGasData = async (
   payload: any,
   forceRefresh = false
 ): Promise<Response> => {
+  // Automatically inject the token if not already present
+  if (!payload.token) {
+    const token = localStorage.getItem('blackout_gas_token');
+    if (token) {
+      payload.token = token;
+    }
+  }
+
   const action = payload?.action;
   let cacheKey: string | null = null;
 
