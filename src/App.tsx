@@ -208,9 +208,9 @@ export default function App() {
             Free Agency
           </button>
           <button
-            onClick={() => isLeagueManagerPlus && navigateTo('draft-mode')}
-            disabled={!isLeagueManagerPlus}
-            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isLeagueManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'draft-mode' ? 'bg-white/10 text-white border border-white/20' : ''}`}
+            onClick={() => isTeamManagerPlus && navigateTo('draft-mode')}
+            disabled={!isTeamManagerPlus}
+            className={`flex items-center justify-start p-2.5 rounded transition-colors ${!isTeamManagerPlus ? 'opacity-50 cursor-not-allowed border border-transparent' : 'hover:bg-white/5 border border-transparent'} ${currentScreen === 'draft-mode' ? 'bg-white/10 text-white border border-white/20' : ''}`}
           >
             Draft
           </button>
@@ -402,7 +402,7 @@ export default function App() {
               )}
 
               {currentScreen === 'draft-mode' && (
-                <DraftModeScreen onBack={() => setCurrentScreen('main-menu')} />
+                <DraftModeScreen currentUser={currentUser} onBack={() => setCurrentScreen('main-menu')} />
               )}
 
               {currentScreen === 'team-directory' && (
