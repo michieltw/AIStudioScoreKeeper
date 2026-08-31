@@ -252,8 +252,7 @@ export default function GameSummaryModal({
               second_assist_player_id: l.Assist2,
               penalty_duration: l.PenaltyMinutes
             }))
-          },
-          token: import.meta.env.VITE_GAS_TOKEN
+          }
         });
 
         // Clear cache so that Stats and Standings update with the new game
