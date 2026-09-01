@@ -664,9 +664,36 @@ function doPost(e) {
              gamesSheet.getRange(1, 1, 1, dbSchema["games"].length).setFontWeight("bold");
           }
           const headers = dbSchema["games"];
+
+          const gamesData = gamesSheet.getDataRange().getValues();
+          const sheetHeaders = gamesData[0] || headers;
+          const idIdx = sheetHeaders.indexOf('id');
+
           data.newSchema.games.forEach(g => {
-            const row = headers.map(h => sanitizeField(g[h] || ''));
-            gamesSheet.appendRow(row);
+            const gameId = g['id'];
+            let rowIndex = -1;
+
+            if (idIdx !== -1 && gameId) {
+              for (let i = 1; i < gamesData.length; i++) {
+                if (gamesData[i][idIdx] === gameId) {
+                  rowIndex = i;
+                  break;
+                }
+              }
+            }
+
+            if (rowIndex !== -1) {
+              // Update existing row
+              sheetHeaders.forEach((h, colIndex) => {
+                if (g[h] !== undefined) {
+                  gamesSheet.getRange(rowIndex + 1, colIndex + 1).setValue(sanitizeField(g[h]));
+                }
+              });
+            } else {
+              // Append new row
+              const row = headers.map(h => sanitizeField(g[h] || ''));
+              gamesSheet.appendRow(row);
+            }
           });
         }
         if (data.newSchema.game_events) {
