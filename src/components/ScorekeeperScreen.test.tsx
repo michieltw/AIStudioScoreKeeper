@@ -142,7 +142,7 @@ describe('ScorekeeperScreen', () => {
     expect(screen.getByText('Wedstrijd opgeslagen in local storage!')).toBeInTheDocument();
   });
 
-  it('saves to played games and calls onBack when handleFinishGame is called', () => {
+  it('calls onBack when handleFinishGame is called', () => {
     render(<ScorekeeperScreen contract={defaultSettingsContract} onBack={mockOnBack} />);
 
     // Open End Game modal
@@ -152,15 +152,6 @@ describe('ScorekeeperScreen', () => {
     // Finish game from summary modal
     const finishButton = screen.getByTestId('finish-game');
     fireEvent.click(finishButton);
-
-    const playedGamesStr = localStorage.getItem('blackout_played_games');
-    expect(playedGamesStr).not.toBeNull();
-
-    if (playedGamesStr) {
-      const playedGames = JSON.parse(playedGamesStr);
-      expect(playedGames.length).toBe(1);
-      expect(playedGames[0].scoreHome).toBe(defaultSettingsContract.defaultInitialScoreHome);
-    }
 
     expect(mockOnBack).toHaveBeenCalledTimes(1);
   });

@@ -80,14 +80,6 @@ export default function MainMenuScreen({
           }
 
         } catch (e) {}
-      } else {
-        // Fallback to local storage
-        const saved = localStorage.getItem('blackout_scheduled_games');
-        if (saved) {
-          try {
-            setScheduledGames(JSON.parse(saved));
-          } catch (e) {}
-        }
       }
     };
     fetchGamesData();
