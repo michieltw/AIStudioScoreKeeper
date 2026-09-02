@@ -418,18 +418,6 @@ export function useScorekeeperState({ contract, onBack }: { contract: SettingsCo
 
   const handleFinishGame = () => {
     try {
-      const savedPlayed = localStorage.getItem('blackout_played_games');
-      const playedGames = savedPlayed ? JSON.parse(savedPlayed) : [];
-      playedGames.push({
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
-        homeTeam: config.homeTeam,
-        awayTeam: config.awayTeam,
-        scoreHome: gameState.scoreHome,
-        scoreAway: gameState.scoreAway,
-        events: gameState.events
-      });
-      localStorage.setItem('blackout_played_games', JSON.stringify(playedGames));
       // Remove from saved game since it's finished
       localStorage.removeItem('blackout_hockey_saved_game');
     } catch (e) {

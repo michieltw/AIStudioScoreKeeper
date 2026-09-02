@@ -233,6 +233,7 @@ export default function GameSummaryModal({
               season_id: "current",
               home_team_id: game.HomeTeam,
               away_team_id: game.AwayTeam,
+              venue_id: game.Location,
               home_score: game.HomeScore,
               away_score: game.AwayScore,
               status: "completed"

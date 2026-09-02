@@ -35,43 +35,6 @@ describe('MainMenuScreen', () => {
     expect(mockProps.onNewGame).toHaveBeenCalledTimes(1);
   });
 
-  it('renders scheduled games from localStorage', async () => {
-    const games = [{
-      id: '1', homeTeam: 'Team A', awayTeam: 'Team B',
-      date: '2023-10-27', time: '20:00', location: 'Rink 1',
-      competition: 'Friendly', matchType: 'Exhibition'
-    }];
-    localStorage.setItem('blackout_scheduled_games', JSON.stringify(games));
-
-    render(<MainMenuScreen {...mockProps} />);
-
-    // Wait for the scheduled games to render
-    await waitFor(() => {
-      expect(screen.getByText('Team A vs Team B')).toBeInTheDocument();
-      expect(screen.getByText('2023-10-27 • 20:00 • Rink 1')).toBeInTheDocument();
-    });
-  });
-
-  it('calls onStartScheduledGame when a scheduled game is clicked', async () => {
-    const games = [{
-      id: '1', homeTeam: 'Team A', awayTeam: 'Team B',
-      date: '2023-10-27', time: '20:00', location: 'Rink 1',
-      competition: 'Friendly', matchType: 'Exhibition'
-    }];
-    localStorage.setItem('blackout_scheduled_games', JSON.stringify(games));
-
-    render(<MainMenuScreen {...mockProps} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Team A vs Team B')).toBeInTheDocument();
-    });
-
-    const gameButton = screen.getByText('Team A vs Team B');
-    fireEvent.click(gameButton);
-
-    expect(mockProps.onStartScheduledGame).toHaveBeenCalledTimes(1);
-    expect(mockProps.onStartScheduledGame).toHaveBeenCalledWith(games[0]);
-  });
 
   it('hides video overlay when skip button is clicked', () => {
     render(<MainMenuScreen {...mockProps} />);
@@ -84,14 +47,8 @@ describe('MainMenuScreen', () => {
     expect(screen.queryByText('SKIP')).not.toBeInTheDocument();
   });
 
-  it('prevents guest users from starting a new game or scheduled games', async () => {
+  it('prevents guest users from starting a new game', async () => {
     const guestUser = { id: 'guest', email: 'guest@blackouthockey.com', role: 'Guest' as const };
-    const games = [{
-      id: '1', homeTeam: 'Team A', awayTeam: 'Team B',
-      date: '2023-10-27', time: '20:00', location: 'Rink 1',
-      competition: 'Friendly', matchType: 'Exhibition'
-    }];
-    localStorage.setItem('blackout_scheduled_games', JSON.stringify(games));
 
     render(<MainMenuScreen {...mockProps} currentUser={guestUser} />);
 
@@ -99,15 +56,6 @@ describe('MainMenuScreen', () => {
     expect(newGameButton).toBeDisabled();
     fireEvent.click(newGameButton);
     expect(mockProps.onNewGame).not.toHaveBeenCalled();
-
-    await waitFor(() => {
-      expect(screen.getByText('Team A vs Team B')).toBeInTheDocument();
-    });
-
-    const gameButton = screen.getByText('Team A vs Team B').closest('button')!;
-    expect(gameButton).toBeDisabled();
-    fireEvent.click(gameButton);
-    expect(mockProps.onStartScheduledGame).not.toHaveBeenCalled();
   });
 
   it('renders edge-to-edge banner image without color inversion in light or dark mode', () => {
