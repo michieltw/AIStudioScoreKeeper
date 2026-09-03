@@ -55,65 +55,108 @@ export default function CalendarScreen({ onBack }: CalendarScreenProps) {
           venuesRes.json()
         ]);
 
-        const mappedTeams = (teamsData.status === 'Success' && Array.isArray(teamsData.data)) ? teamsData.data.slice(1).reduce((acc: any, row: any[]) => {
-          if(row[0]) {
-             acc[row[0]] = { name: row[4], logoUrl: row[9] }; // id: 0, name: 4, logoUrl: 9 based on types.ts and usual indices. We'll map them carefully.
-             // Actually, dbSchema teams: ["id", "club_id", "competition_id", "team_code", "name", "tier_id", "coach_id", "general_manager_id", "founded_year", "logo_url", ... ]
-             // id=0, name=4, logo_url=9
+        let mappedTeams: Record<string, {name: string, logoUrl: string}> = {};
+        if (teamsData.status === 'Success' && Array.isArray(teamsData.data) && teamsData.data.length > 1) {
+          const headers = teamsData.data[0];
+          const idIdx = headers.indexOf('id');
+          const nameIdx = headers.indexOf('name');
+          const logoIdx = headers.indexOf('logo_url');
+          if (idIdx !== -1) {
+            mappedTeams = teamsData.data.slice(1).reduce((acc: any, row: any[]) => {
+              if (row[idIdx]) {
+                acc[row[idIdx]] = {
+                  name: nameIdx !== -1 ? row[nameIdx] : undefined,
+                  logoUrl: logoIdx !== -1 ? row[logoIdx] : undefined
+                };
+              }
+              return acc;
+            }, {});
           }
-          return acc;
-        }, {}) : {};
+        }
 
-        const mappedVenues = (venuesData.status === 'Success' && Array.isArray(venuesData.data)) ? venuesData.data.slice(1).reduce((acc: any, row: any[]) => {
-           if(row[0]) {
-              acc[row[0]] = row[1]; // id=0, name=1
-           }
-           return acc;
-        }, {}) : {};
+        let mappedVenues: Record<string, string> = {};
+        if (venuesData.status === 'Success' && Array.isArray(venuesData.data) && venuesData.data.length > 1) {
+          const headers = venuesData.data[0];
+          const idIdx = headers.indexOf('id');
+          const nameIdx = headers.indexOf('name');
+          if (idIdx !== -1) {
+            mappedVenues = venuesData.data.slice(1).reduce((acc: any, row: any[]) => {
+               if (row[idIdx]) {
+                  acc[row[idIdx]] = nameIdx !== -1 ? row[nameIdx] : undefined;
+               }
+               return acc;
+            }, {});
+          }
+        }
 
         const fetchedEvents: EcosystemEvent[] = [];
 
         if (gamesData.status === 'Success' && Array.isArray(gamesData.data) && gamesData.data.length > 1) {
-           // games: ["id", "season_id", "home_team_id", "away_team_id", "venue_id", "scheduled_at", "started_at", "ended_at", "home_score", "away_score", "status", "attendance", "notes", "created_at", "updated_at"]
-           gamesData.data.slice(1).forEach((row: any[]) => {
-              if (row[0]) {
-                 fetchedEvents.push({
-                   id: row[0],
-                   eventType: 'Game',
-                   homeTeamId: row[2],
-                   awayTeamId: row[3],
-                   venueId: row[4],
-                   date: row[5] ? format(new Date(row[5]), 'yyyy-MM-dd') : '',
-                   time: row[5] ? format(new Date(row[5]), 'HH:mm') : '',
-                   // attach names for convenience
-                   homeTeamName: mappedTeams[row[2]]?.name || row[2],
-                   awayTeamName: mappedTeams[row[3]]?.name || row[3],
-                   homeTeamLogo: mappedTeams[row[2]]?.logoUrl,
-                   awayTeamLogo: mappedTeams[row[3]]?.logoUrl,
-                   venueName: mappedVenues[row[4]] || 'TBD',
-                   homeScore: row[8],
-                   awayScore: row[9],
-                   status: row[10]
-                 } as any);
-              }
-           });
+           const headers = gamesData.data[0];
+           const idIdx = headers.indexOf('id');
+           const homeTeamIdx = headers.indexOf('home_team_id');
+           const awayTeamIdx = headers.indexOf('away_team_id');
+           const venueIdx = headers.indexOf('venue_id');
+           const scheduledAtIdx = headers.indexOf('scheduled_at');
+           const homeScoreIdx = headers.indexOf('home_score');
+           const awayScoreIdx = headers.indexOf('away_score');
+           const statusIdx = headers.indexOf('status');
+
+           if (idIdx !== -1) {
+             gamesData.data.slice(1).forEach((row: any[]) => {
+                if (row[idIdx]) {
+                   const hTeamId = homeTeamIdx !== -1 ? row[homeTeamIdx] : undefined;
+                   const aTeamId = awayTeamIdx !== -1 ? row[awayTeamIdx] : undefined;
+                   const vId = venueIdx !== -1 ? row[venueIdx] : undefined;
+                   const sDate = scheduledAtIdx !== -1 ? row[scheduledAtIdx] : undefined;
+                   fetchedEvents.push({
+                     id: row[idIdx],
+                     eventType: 'Game',
+                     homeTeamId: hTeamId,
+                     awayTeamId: aTeamId,
+                     venueId: vId,
+                     date: sDate ? format(new Date(sDate), 'yyyy-MM-dd') : '',
+                     time: sDate ? format(new Date(sDate), 'HH:mm') : '',
+                     // attach names for convenience
+                     homeTeamName: hTeamId ? mappedTeams[hTeamId]?.name || hTeamId : undefined,
+                     awayTeamName: aTeamId ? mappedTeams[aTeamId]?.name || aTeamId : undefined,
+                     homeTeamLogo: hTeamId ? mappedTeams[hTeamId]?.logoUrl : undefined,
+                     awayTeamLogo: aTeamId ? mappedTeams[aTeamId]?.logoUrl : undefined,
+                     venueName: vId ? mappedVenues[vId] || 'TBD' : 'TBD',
+                     homeScore: homeScoreIdx !== -1 ? row[homeScoreIdx] : undefined,
+                     awayScore: awayScoreIdx !== -1 ? row[awayScoreIdx] : undefined,
+                     status: statusIdx !== -1 ? row[statusIdx] : undefined
+                   } as any);
+                }
+             });
+           }
         }
 
         if (eventsData.status === 'Success' && Array.isArray(eventsData.data) && eventsData.data.length > 1) {
-            // events: ["id", "team_id", "event_type", "scheduled_at", "venue_id", "notes", "created_at", "updated_at"]
-            eventsData.data.slice(1).forEach((row: any[]) => {
-               if(row[0]) {
-                  fetchedEvents.push({
-                     id: row[0],
-                     eventType: row[2] || 'Event',
-                     venueId: row[4],
-                     date: row[3] ? format(new Date(row[3]), 'yyyy-MM-dd') : '',
-                     time: row[3] ? format(new Date(row[3]), 'HH:mm') : '',
-                     venueName: mappedVenues[row[4]] || 'TBD',
-                     notes: row[5]
-                  } as any);
-               }
-            });
+            const headers = eventsData.data[0];
+            const idIdx = headers.indexOf('id');
+            const typeIdx = headers.indexOf('event_type');
+            const venueIdx = headers.indexOf('venue_id');
+            const scheduledAtIdx = headers.indexOf('scheduled_at');
+            const notesIdx = headers.indexOf('notes');
+
+            if (idIdx !== -1) {
+              eventsData.data.slice(1).forEach((row: any[]) => {
+                 if (row[idIdx]) {
+                    const vId = venueIdx !== -1 ? row[venueIdx] : undefined;
+                    const sDate = scheduledAtIdx !== -1 ? row[scheduledAtIdx] : undefined;
+                    fetchedEvents.push({
+                       id: row[idIdx],
+                       eventType: typeIdx !== -1 ? (row[typeIdx] || 'Event') : 'Event',
+                       venueId: vId,
+                       date: sDate ? format(new Date(sDate), 'yyyy-MM-dd') : '',
+                       time: sDate ? format(new Date(sDate), 'HH:mm') : '',
+                       venueName: vId ? mappedVenues[vId] || 'TBD' : 'TBD',
+                       notes: notesIdx !== -1 ? row[notesIdx] : undefined
+                    } as any);
+                 }
+              });
+            }
         }
 
         setEvents(fetchedEvents);

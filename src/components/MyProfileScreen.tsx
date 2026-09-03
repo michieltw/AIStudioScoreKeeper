@@ -80,15 +80,18 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       const personsResult = await personsRes.json();
       if (personsResult.status === 'Success') {
         const headers = personsResult.data[0];
+        const idIdx = headers.indexOf('id');
         const rows = personsResult.data.slice(1);
-        const personRow = rows.find((r: any[]) => r[0] === personId);
-        if (personRow) {
-          const mappedPerson = headers.reduce((acc: any, curr: string, idx: number) => {
-            acc[curr] = personRow[idx];
-            return acc;
-          }, {});
-          setProfileData(mappedPerson);
-          setEditProfileForm(mappedPerson);
+        if (idIdx !== -1) {
+          const personRow = rows.find((r: any[]) => r[idIdx] === personId);
+          if (personRow) {
+            const mappedPerson = headers.reduce((acc: any, curr: string, idx: number) => {
+              acc[curr] = personRow[idx];
+              return acc;
+            }, {});
+            setProfileData(mappedPerson);
+            setEditProfileForm(mappedPerson);
+          }
         }
       }
 
@@ -97,54 +100,67 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       const eqResult = await eqRes.json();
       if (eqResult.status === 'Success') {
         const eqHeaders = eqResult.data[0];
+        const idIdx = eqHeaders.indexOf('id');
+        const personIdIdx = eqHeaders.indexOf('person_id');
+        const typeIdx = eqHeaders.indexOf('equipment_type');
+        const brandIdx = eqHeaders.indexOf('brand_id');
+        const serialIdx = eqHeaders.indexOf('serial_number');
+        const purchaseDateIdx = eqHeaders.indexOf('purchase_date');
+        const notesIdx = eqHeaders.indexOf('notes');
         const eqRows = eqResult.data.slice(1);
         // Note: equipment might be multiple rows, but we simplify by taking the first matched or map all.
         // Let's assume one row per person for simplification, or filter by equipment_type
-        const playerEq = eqRows.filter((r: any[]) => r[1] === personId); // index 1 is person_id according to schema
+        if (personIdIdx !== -1) {
+          const playerEq = eqRows.filter((r: any[]) => r[personIdIdx] === personId);
 
-        // For UI simplicity, we map specific types
-        const eqMap: any = {};
-        let eqIdMap: any = {}; // store ids to allow updating
-        playerEq.forEach((row: any[]) => {
-          const type = row[2]; // equipment_type
-          const brand = row[3]; // brand_id
-          const serial = row[4]; // serial_number
-          const purchaseDate = row[5]; // purchase_date
-          const notes = row[9]; // notes, using notes as model/details for simplicity
-          eqMap[`${type}Brand`] = brand;
-          eqMap[`${type}Model`] = notes;
-          eqIdMap[`${type}Id`] = row[0]; // id
+          // For UI simplicity, we map specific types
+          const eqMap: any = {};
+          let eqIdMap: any = {}; // store ids to allow updating
+          playerEq.forEach((row: any[]) => {
+            const type = typeIdx !== -1 ? row[typeIdx] : undefined;
+            const brand = brandIdx !== -1 ? row[brandIdx] : undefined;
+            const serial = serialIdx !== -1 ? row[serialIdx] : undefined;
+            const purchaseDate = purchaseDateIdx !== -1 ? row[purchaseDateIdx] : undefined;
+            const notes = notesIdx !== -1 ? row[notesIdx] : undefined;
+            if (type) {
+              eqMap[`${type}Brand`] = brand;
+              eqMap[`${type}Model`] = notes;
+              if (idIdx !== -1) {
+                eqIdMap[`${type}Id`] = row[idIdx]; // id
+              }
 
-          if (type === 'stick') {
-            let modelVal = notes || '';
-            let curveVal = '';
-            let flexVal = '';
-            let purchaseYearVal = purchaseDate ? String(purchaseDate).substring(0, 4) : '';
+              if (type === 'stick') {
+                let modelVal = notes || '';
+                let curveVal = '';
+                let flexVal = '';
+                let purchaseYearVal = purchaseDate ? String(purchaseDate).substring(0, 4) : '';
 
-            if (notes) {
-              try {
-                const parsed = JSON.parse(notes);
-                if (parsed && typeof parsed === 'object') {
-                  modelVal = parsed.model || '';
-                  curveVal = parsed.curve || '';
-                  flexVal = parsed.flex || '';
-                  if (parsed.purchaseYear) purchaseYearVal = String(parsed.purchaseYear);
+                if (notes) {
+                  try {
+                    const parsed = JSON.parse(notes);
+                    if (parsed && typeof parsed === 'object') {
+                      modelVal = parsed.model || '';
+                      curveVal = parsed.curve || '';
+                      flexVal = parsed.flex || '';
+                      if (parsed.purchaseYear) purchaseYearVal = String(parsed.purchaseYear);
+                    }
+                  } catch (e) {
+                    modelVal = notes;
+                  }
                 }
-              } catch (e) {
-                modelVal = notes;
+                if (!purchaseYearVal && purchaseDate) {
+                  purchaseYearVal = String(purchaseDate).substring(0, 4);
+                }
+                eqMap.stickModel = modelVal;
+                eqMap.stickCurve = curveVal;
+                eqMap.stickFlex = flexVal;
+                eqMap.stickPurchaseYear = purchaseYearVal;
               }
             }
-            if (!purchaseYearVal && purchaseDate) {
-              purchaseYearVal = String(purchaseDate).substring(0, 4);
-            }
-            eqMap.stickModel = modelVal;
-            eqMap.stickCurve = curveVal;
-            eqMap.stickFlex = flexVal;
-            eqMap.stickPurchaseYear = purchaseYearVal;
-          }
-        });
-        setEquipmentData({ ...eqMap, _ids: eqIdMap });
-        setEditEquipmentForm(eqMap);
+          });
+          setEquipmentData({ ...eqMap, _ids: eqIdMap });
+          setEditEquipmentForm(eqMap);
+        }
       }
 
       // Fetch jobs data
@@ -152,16 +168,21 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       const jobsResult = await jobsRes.json();
       if (jobsResult.status === 'Success') {
         const jobsHeaders = jobsResult.data[0];
+        const personIdIdx = jobsHeaders.indexOf('person_id');
+        const jobTypeIdx = jobsHeaders.indexOf('job_type');
         const jobsRows = jobsResult.data.slice(1);
-        const playerJobs = jobsRows.filter((r: any[]) => r[1] === personId && r[2] !== 'Deleted'); // index 1 is person_id, filter out deleted
 
-        const mappedJobs = playerJobs.map((row: any[]) => {
-            return jobsHeaders.reduce((acc: any, curr: string, idx: number) => {
-              acc[curr] = row[idx];
-              return acc;
-            }, {});
-        });
-        setJobsData(mappedJobs);
+        if (personIdIdx !== -1) {
+          const playerJobs = jobsRows.filter((r: any[]) => r[personIdIdx] === personId && (jobTypeIdx === -1 || r[jobTypeIdx] !== 'Deleted'));
+
+          const mappedJobs = playerJobs.map((row: any[]) => {
+              return jobsHeaders.reduce((acc: any, curr: string, idx: number) => {
+                acc[curr] = row[idx];
+                return acc;
+              }, {});
+          });
+          setJobsData(mappedJobs);
+        }
       }
 
     } catch (e: any) {
