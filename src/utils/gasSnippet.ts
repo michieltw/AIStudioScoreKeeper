@@ -1,200 +1,6 @@
 export const generateGasCodeSnippet = (token: string) => `function setupSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // Phase 1 Ecosystem Tabs
-  let orgSheet = ss.getSheetByName("Organizations");
-  if (!orgSheet) {
-    orgSheet = ss.insertSheet("Organizations");
-    orgSheet.appendRow(["OrgID", "Name", "Contact"]);
-    orgSheet.getRange("A1:C1").setFontWeight("bold");
-  }
-
-  let leaguesSheet = ss.getSheetByName("Leagues");
-  if (!leaguesSheet) {
-    leaguesSheet = ss.insertSheet("Leagues");
-    leaguesSheet.appendRow(["LeagueID", "OrgID", "Name", "Level"]);
-    leaguesSheet.getRange("A1:D1").setFontWeight("bold");
-  }
-
-  let divisionsSheet = ss.getSheetByName("Divisions");
-  if (!divisionsSheet) {
-    divisionsSheet = ss.insertSheet("Divisions");
-    divisionsSheet.appendRow(["DivisionID", "LeagueID", "Name"]);
-    divisionsSheet.getRange("A1:C1").setFontWeight("bold");
-  }
-
-  let seasonsSheet = ss.getSheetByName("Seasons");
-  if (!seasonsSheet) {
-    seasonsSheet = ss.insertSheet("Seasons");
-    seasonsSheet.appendRow(["SeasonID", "Name", "StartDate", "EndDate"]);
-    seasonsSheet.getRange("A1:D1").setFontWeight("bold");
-  }
-
-  let clubsSheet = ss.getSheetByName("Clubs");
-  if (!clubsSheet) {
-    clubsSheet = ss.insertSheet("Clubs");
-    clubsSheet.appendRow(["ClubID", "Name", "Founded"]);
-    clubsSheet.getRange("A1:C1").setFontWeight("bold");
-  }
-
-  let venuesSheet = ss.getSheetByName("Venues");
-  if (!venuesSheet) {
-    venuesSheet = ss.insertSheet("Venues");
-    venuesSheet.appendRow(["VenueID", "Name", "City", "Country", "Capacity", "Address", "Phone", "LockerRooms", "IceSheets"]);
-    venuesSheet.getRange("A1:I1").setFontWeight("bold");
-
-    const defaultVenues = [
-      ["VEN-001", "Kardinge IJsbaan", "Groningen", "Netherlands", 900, "Kardingerplein 1", "", 12, 1],
-      ["VEN-002", "Thialf", "Heerenveen", "Netherlands", 3500, "Pim Mulierlaan 1", "", "", 1],
-      ["VEN-003", "11Stedenhal", "Leeuwarden", "Netherlands", 400, "Fryslânplein 1", "", "", 1],
-      ["VEN-004", "De Meent", "Alkmaar", "Netherlands", 100, "Terborchlaan 301", "", "", 1],
-      ["VEN-005", "Triavium", "Nijmegen", "Netherlands", 1800, "Van Rosenburgweg 2", "", "", 1],
-      ["VEN-006", "IJsbaan Twente", "Enschede", "Netherlands", 100, "Colosseum 90", "", "", 1],
-      ["VEN-007", "Jaap Eden", "Amsterdam", "Netherlands", 2000, "Radioweg 64", "", "", 1],
-      ["VEN-008", "Uithof", "Den Haag", "Netherlands", 3000, "Jaap Edenweg 10", "", "", 1],
-      ["VEN-009", "IJssportcentrum", "Eindhoven", "Netherlands", 2500, "Antoon Coolenlaan 3", "", "", 2],
-      ["VEN-010", "Glanerbrook", "Geleen", "Netherlands", 1200, "Kummenaedestraat 45", "", "", 1],
-      ["VEN-013", "Sportboulevard Dordrecht", "Dordrecht", "Netherlands", 1800, "Fanny Blankers-Koenweg 10", "", "", 1],
-      ["VEN-014", "De Vechtsebanen", "Utrecht", "Netherlands", 2500, "Mississippidreef 151", "", "", 1],
-      ["VEN-015", "De Westfries", "Hoorn", "Netherlands", 100, "Westfriese Parkweg 5", "", "", 1],
-      ["VEN-017", "Stappegoor", "Tilburg", "Netherlands", 3000, "Stappegoorweg 1", "", "", 2],
-      ["VEN-018", "IJshal De Vliet", "Leiden", "Netherlands", 100, "Marie Diebenplaats 104", "", "", 1],
-      ["VEN-019", "IceFun Sportiom", "Den Bosch", "Netherlands", 800, "Victorialaan 10", "", "", 1],
-      ["VEN-020", "SilverDome", "Zoetermeer", "Netherlands", 1500, "Van der Hagenstraat 20", "", "", 1],
-      ["VEN-021", "Kunstijsbaan Breda", "Breda", "Netherlands", 500, "Terheijdenseweg 506", "", "", 1],
-      ["VEN-022", "Sport Vlaanderen Herentals", "Herentals", "Belgium", 200, "Vorselaarsebaan 60", "", "", 1],
-      ["VEN-023", "IJsbaan Haarlem", "Haarlem", "Netherlands", 100, "IJsbaanlaan 2", "", "", 1],
-      ["VEN-024", "Ice Park Beaufort", "Beaufort", "Luxembourgh", 500, "Grand-Rue 87", "", "", 1],
-      ["VEN-025", "IJsbaan Leuven", "Leuven", "Belgium", 800, "Ondernemingenweg 1", "", "", 1],
-      ["VEN-026", "Patinoire de Liège", "Luik (Liège)", "Belgium", 1300, "Boulevard Raymond Poincaré 7/112", "", "", 1],
-      ["VEN-027", "Patinoire de Charleroi", "Charleroi", "Belgium", 500, "Rue Neuve 75a", "", "", 1],
-      ["VEN-028", "IJsbaan Kristallijn", "Gent", "Belgium", 1000, "Warmoezeniersweg 20", "", "", 1],
-      ["VEN-029", "Sport Vlaanderen (Schaverdijn)", "Hasselt", "Belgium", 1000, "Gouverneur Verwilghensingel 13-15", "", "", 1],
-      ["VEN-030", "IJsbaan De Piste", "Kortrijk", "Belgium", 800, "Gentsesteenweg 131", "", "", 1],
-      ["VEN-031", "IJsbaan Netepark", "Herentals", "Belgium", 300, "Vorselaarsebaan 56", "", "", 1],
-      ["VEN-033", "IJsbaan Heuvelkouter", "Liedekerke", "Belgium", 1000, "Sportlaan 5", "", "", 1],
-      ["VEN-034", "Patinoire de Kockelscheuer", "Luxemburg", "Luxembourgh", 800, "42, Route de Bettembourg", "", "", 1],
-      ["VEN-035", "Sportcentrum Die Swaene", "Heist-op-den-Berg", "Belgium", 500, "Kasteelstraat 85", "", "", 1],
-      ["VEN-036", "Ice Skating Center Mechelen", "Mechelen", "Belgium", 600, "Spuibeekstraat 1", "", "", 1],
-      ["VEN-037", "IJsbaan Finlandia", "Gullegem", "Belgium", 500, "Driemasten 39", "", "", 1],
-      ["VEN-038", "Sportoase Groot Schijn", "Deurne", "Belgium", 1000, "Ruggeveldlaan 488", "", "", 1],
-      ["VEN-039", "Natuurijs", "N.T.B.", "N.T.B.", 100, "N.T.B.", "", 0, 1]
-    ];
-
-    defaultVenues.forEach(venue => {
-      venuesSheet.appendRow(venue);
-    });
-  }
-
-  // Settings Tab
-  let settingsSheet = ss.getSheetByName("Settings");
-  if (!settingsSheet) {
-    settingsSheet = ss.insertSheet("Settings");
-    settingsSheet.appendRow(["SettingName", "SettingValue"]);
-    settingsSheet.getRange("A1:B1").setFontWeight("bold");
-  }
-
-  // Teams Tab
-  let teamsSheet = ss.getSheetByName("Teams");
-  if (!teamsSheet) {
-    teamsSheet = ss.insertSheet("Teams");
-    teamsSheet.appendRow(["TeamName", "PlayerID", "PlayerNumber", "PlayerName", "PlayerPosition"]);
-    teamsSheet.getRange("A1:E1").setFontWeight("bold");
-  }
-
-  // ActionLogs Tab
-  let logsSheet = ss.getSheetByName("ActionLogs");
-  if (!logsSheet) {
-    logsSheet = ss.insertSheet("ActionLogs");
-    logsSheet.appendRow(["GameID", "Date", "HomeTeam", "AwayTeam", "Timestamp", "EventType", "Team", "Description", "X", "Y", "Player", "Assist1", "Assist2", "PenaltyReason", "PenaltyMinutes", "EventID"]);
-    logsSheet.getRange("A1:P1").setFontWeight("bold");
-  }
-
-  // Games Tab
-  let gamesSheet = ss.getSheetByName("Games");
-  if (!gamesSheet) {
-    gamesSheet = ss.insertSheet("Games");
-    gamesSheet.appendRow(["GameID", "Date", "HomeTeam", "AwayTeam", "HomeScore", "AwayScore", "HomeSOG", "AwaySOG", "Location", "EventID", "IsOfficial", "Season", "Division"]);
-    gamesSheet.getRange("A1:M1").setFontWeight("bold");
-  }
-
-  // Standings Tab
-  let standingsSheet = ss.getSheetByName("Standings");
-  if (!standingsSheet) {
-    standingsSheet = ss.insertSheet("Standings");
-    standingsSheet.appendRow(["Team", "Season", "Division", "GP", "W", "L", "OTL", "PTS", "ROW", "GF", "GA", "DIFF"]);
-    standingsSheet.getRange("A1:L1").setFontWeight("bold");
-  }
-
-  // PlayerStats Tab
-  let statsSheet = ss.getSheetByName("PlayerStats");
-  if (!statsSheet) {
-    statsSheet = ss.insertSheet("PlayerStats");
-    statsSheet.appendRow(["Player", "Team", "GP", "G", "A", "PTS", "PIM"]);
-    statsSheet.getRange("A1:G1").setFontWeight("bold");
-  }
-
-  // ScheduledGames Tab
-  let scheduledSheet = ss.getSheetByName("ScheduledGames");
-  if (!scheduledSheet) {
-    scheduledSheet = ss.insertSheet("ScheduledGames");
-    scheduledSheet.appendRow(["GameID", "HomeTeam", "AwayTeam", "Date", "Time", "Location", "Competition", "MatchType"]);
-    scheduledSheet.getRange("A1:H1").setFontWeight("bold");
-  }
-
-  // Phase 4: Events, RSVPs, Lineups
-  let eventsSheet = ss.getSheetByName("Events");
-  if (!eventsSheet) {
-    eventsSheet = ss.insertSheet("Events");
-    eventsSheet.appendRow(["EventID", "VenueID", "SeasonID", "PhaseID", "EventType", "HomeTeamID", "AwayTeamID", "TournamentMode", "Date", "Time"]);
-    eventsSheet.getRange("A1:J1").setFontWeight("bold");
-  }
-
-  let rsvpsSheet = ss.getSheetByName("RSVPs");
-  if (!rsvpsSheet) {
-    rsvpsSheet = ss.insertSheet("RSVPs");
-    rsvpsSheet.appendRow(["EventID", "PersonID", "Status"]);
-    rsvpsSheet.getRange("A1:C1").setFontWeight("bold");
-  }
-
-  let lineupsSheet = ss.getSheetByName("Lineups");
-  if (!lineupsSheet) {
-    lineupsSheet = ss.insertSheet("Lineups");
-    lineupsSheet.appendRow(["EventID", "PersonID", "TeamID", "UnitType"]);
-    lineupsSheet.getRange("A1:D1").setFontWeight("bold");
-  }
-
-  // Phase 6: Drafts
-  let draftsSheet = ss.getSheetByName("DraftPicks");
-  if (!draftsSheet) {
-    draftsSheet = ss.insertSheet("DraftPicks");
-    draftsSheet.appendRow(["TeamID", "OriginalTeamID", "Year", "Round", "PickNumber", "PersonID"]);
-    draftsSheet.getRange("A1:F1").setFontWeight("bold");
-  }
-
-  // Ecosystem / Persons & Profiles
-  let personsSheet = ss.getSheetByName("persons");
-  if (!personsSheet) {
-    personsSheet = ss.insertSheet("persons");
-    personsSheet.appendRow(["id", "person_code", "first_name", "last_name", "date_of_birth", "nationality", "gender", "height_cm", "weight_kg", "jersey_number", "plays_position", "secondary_position", "shoots", "visibility", "ijn_bondsnummer", "playstyle", "status", "photo_url", "cover_url", "bio", "created_at", "updated_at"]);
-    personsSheet.getRange("A1:V1").setFontWeight("bold");
-  }
-
-  let playerEquipmentSheet = ss.getSheetByName("player_equipment");
-  if (!playerEquipmentSheet) {
-    playerEquipmentSheet = ss.insertSheet("player_equipment");
-    playerEquipmentSheet.appendRow(["id", "person_id", "equipment_type", "brand_id", "serial_number", "purchase_date", "active_from", "active_to", "condition", "notes", "created_at", "updated_at"]);
-    playerEquipmentSheet.getRange("A1:L1").setFontWeight("bold");
-  }
-
-  let jobsSheet = ss.getSheetByName("jobs");
-  if (!jobsSheet) {
-    jobsSheet = ss.insertSheet("jobs");
-    jobsSheet.appendRow(["id", "person_id", "job_type", "organization_id", "start_date", "end_date", "is_active", "created_at"]);
-    jobsSheet.getRange("A1:H1").setFontWeight("bold");
-  }
-
-
   // ============================================================================
   // DYNAMIC SCHEMA GENERATION (Merged from Google Sheet Tabs)
   // ============================================================================
@@ -311,7 +117,8 @@ export const generateGasCodeSnippet = (token: string) => `function setupSheet() 
     "badges": ["id", "name", "description", "icon_url", "tier", "created_at"],
     "user_badges": ["id", "user_id", "badge_id", "earned_at", "created_at"],
     "seasonal_awards": ["id", "season_id", "award_name", "category", "person_id", "team_id", "description", "award_order", "created_at", "updated_at"],
-    "player_awards": ["id", "season_id", "person_id", "game_id", "award_type", "description", "awarded_at", "created_at"]
+    "player_awards": ["id", "season_id", "person_id", "game_id", "award_type", "description", "awarded_at", "created_at"],
+    "settings": ["SettingName", "SettingValue"]
   };
 
   for (const sheetName in dbSchema) {
@@ -649,7 +456,7 @@ function doPost(e) {
     }
 
     if (data.action === 'getSettings') {
-      const sheet = ss.getSheetByName("Settings");
+      const sheet = ss.getSheetByName("settings");
       const values = sheet ? sheet.getDataRange().getValues() : [];
       return ContentService.createTextOutput(JSON.stringify({status: "Success", data: values})).setMimeType(ContentService.MimeType.JSON);
     }
