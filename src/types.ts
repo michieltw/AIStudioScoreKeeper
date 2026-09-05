@@ -1,4 +1,4 @@
-export type Screen = 'splash' | 'main-menu' | 'settings' | 'scorekeeper' | 'database' | 'stats' | 'ecosystem' | 'my-profile' | 'people-directory' | 'team-directory' | 'roster-builder' | 'free-agency' | 'calendar' | 'lineup-builder' | 'draft-mode' | 'setup-wizard' | 'scores' | 'standings' | 'rulebook' | 'more' | 'players' | 'my-team';
+export type Screen = 'splash' | 'main-menu' | 'settings' | 'scorekeeper' | 'database' | 'stats' | 'ecosystem' | 'my-profile' | 'people-directory' | 'team-directory' | 'team-profile' | 'roster-builder' | 'free-agency' | 'calendar' | 'lineup-builder' | 'draft-mode' | 'setup-wizard' | 'scores' | 'standings' | 'rulebook' | 'more' | 'players' | 'my-team';
 
 export interface Team {
   id: string;
