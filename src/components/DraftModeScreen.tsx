@@ -824,8 +824,8 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
                     onClick={() => setSelectedRound(r)}
                     className={`px-4 py-2 rounded font-mono text-xs font-bold uppercase tracking-wider transition-colors border ${
                       selectedRound === r
-                        ? 'bg-white/10 text-white border-tertiary'
-                        : 'bg-[#050505] text-on-surface-variant border-[#2A2A2A] hover:border-white/20'
+                        ? 'bg-surface-container-high text-white border-tertiary shadow-sm'
+                        : 'bg-card-gradient metallic-border text-on-surface-variant hover:text-white'
                     }`}
                   >
                     Round {r}
@@ -834,7 +834,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
               </div>
 
               {/* Picks in Selected Round */}
-              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg divide-y divide-[#2A2A2A] overflow-hidden">
+              <div className="bg-card-gradient metallic-border rounded-lg divide-y divide-[#2A2A2A] overflow-hidden">
                 {roundPicks.map(p => {
                   const team = teams.find(t => t.id === p.teamId);
                   const player = players.find(pl => pl.id === p.personId);
@@ -911,7 +911,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
 
             {/* Right: Recent Picks Feed */}
             <div className="flex flex-col gap-4">
-              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col gap-3">
                 <h3 className="font-mono text-white text-xs font-bold uppercase tracking-widest flex items-center justify-between">
                   <span>Recent Picks</span>
                   <span className="text-tertiary">{recentPicks.length} Made</span>
@@ -926,7 +926,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
                     {recentPicks.map(({ pick, player, team }) => (
                       <div
                         key={pick.overallPick}
-                        className="bg-[#111] border border-[#2A2A2A] rounded p-2.5 flex items-center justify-between text-xs"
+                        className="bg-[#050505]/50 border border-[#2A2A2A] rounded p-2.5 flex items-center justify-between text-xs"
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-[10px] text-tertiary font-bold">
@@ -943,7 +943,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
               </div>
 
               {/* Draft Configuration Panel (Admin/League Manager) */}
-              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col gap-3">
                 <h3 className="font-mono text-on-surface-variant text-xs font-bold uppercase tracking-widest">
                   Draft Controls
                 </h3>
@@ -986,7 +986,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
         {activeTab === 'pool' && (
           <div className="flex flex-col gap-4">
             {/* Filters Bar */}
-            <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
               {/* Search */}
               <div className="relative w-full md:w-80">
                 <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -995,7 +995,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
                   placeholder="Search player name, position, nationality..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#111] border border-[#2A2A2A] rounded pl-9 pr-4 py-2 text-sm text-white placeholder:text-on-surface-variant/50 focus:outline-none focus:border-tertiary transition-colors"
+                  className="w-full bg-[#050505]/50 border border-[#2A2A2A] rounded pl-9 pr-4 py-2 text-sm text-white placeholder:text-on-surface-variant/50 focus:outline-none focus:border-tertiary transition-colors"
                 />
               </div>
 
@@ -1007,8 +1007,8 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
                     onClick={() => setPositionFilter(pos)}
                     className={`px-3 py-1.5 rounded font-mono text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
                       positionFilter === pos
-                        ? 'bg-tertiary text-black'
-                        : 'bg-[#111] text-on-surface-variant hover:text-white border border-[#2A2A2A]'
+                        ? 'bg-tertiary text-black shadow-sm'
+                        : 'bg-[#050505]/50 text-on-surface-variant hover:text-white border border-[#2A2A2A]'
                     }`}
                   >
                     {pos}
@@ -1018,7 +1018,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
             </div>
 
             {/* Players Table / Grid */}
-            <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg overflow-hidden">
+            <div className="bg-card-gradient metallic-border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-[#111] text-on-surface-variant font-mono text-xs uppercase border-b border-[#2A2A2A]">
