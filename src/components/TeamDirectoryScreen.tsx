@@ -5,9 +5,10 @@ import { fetchGasData } from '../utils/fetchGas';
 
 interface TeamDirectoryScreenProps {
   onBack: () => void;
+  onViewTeam?: (teamId: string, teamName: string) => void;
 }
 
-export default function TeamDirectoryScreen({ onBack }: TeamDirectoryScreenProps) {
+export default function TeamDirectoryScreen({ onBack, onViewTeam }: TeamDirectoryScreenProps) {
   const [loading, setLoading] = useState(true);
   const [teams, setTeams] = useState<any[]>([]);
   const [competitions, setCompetitions] = useState<any[]>([]);
@@ -144,18 +145,21 @@ export default function TeamDirectoryScreen({ onBack }: TeamDirectoryScreenProps
 
                             <div className="flex items-center gap-2 mt-auto pt-4 border-t border-[#2A2A2A]">
                               <button
+                                onClick={() => onViewTeam && onViewTeam(team.id, team.name)}
                                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-mono font-bold text-on-surface-variant hover:text-white bg-[#050505] rounded border border-[#2A2A2A] hover:border-outline-variant transition-colors"
                                 title="Profile"
                               >
                                 PROFILE <ArrowUpRight className="w-3 h-3" />
                               </button>
                               <button
+                                onClick={() => onViewTeam && onViewTeam(team.id, team.name)}
                                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-mono font-bold text-on-surface-variant hover:text-white bg-[#050505] rounded border border-[#2A2A2A] hover:border-outline-variant transition-colors"
                                 title="Roster"
                               >
                                 ROSTER <Users className="w-3 h-3" />
                               </button>
                               <button
+                                onClick={() => onViewTeam && onViewTeam(team.id, team.name)}
                                 className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-mono font-bold text-on-surface-variant hover:text-white bg-[#050505] rounded border border-[#2A2A2A] hover:border-outline-variant transition-colors"
                                 title="Schedule"
                               >

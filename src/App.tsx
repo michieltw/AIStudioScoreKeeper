@@ -10,6 +10,7 @@ import EcosystemScreen from './components/Ecosystem/EcosystemScreen';
 import MyProfileScreen from './components/MyProfileScreen';
 import PeopleDirectoryScreen from './components/PeopleDirectoryScreen';
 import TeamDirectoryScreen from './components/TeamDirectoryScreen';
+import TeamProfileScreen from './components/TeamProfileScreen';
 import RosterBuilderScreen from './components/RosterBuilderScreen';
 import FreeAgencyScreen from './components/FreeAgencyScreen';
 import CalendarScreen from './components/CalendarScreen';
@@ -40,6 +41,8 @@ function FeedbackScreen({ title, titleColor = "text-tertiary", message, buttonTe
 
 export default function App() {
   const [viewedPerson, setViewedPerson] = useState<any>(null);
+  const [viewedTeamId, setViewedTeamId] = useState<string | null>(null);
+  const [viewedTeamName, setViewedTeamName] = useState<string>('');
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -407,7 +410,26 @@ export default function App() {
               )}
 
               {currentScreen === 'team-directory' && (
-                <TeamDirectoryScreen onBack={() => setCurrentScreen('main-menu')} />
+                <TeamDirectoryScreen
+                  onBack={() => setCurrentScreen('main-menu')}
+                  onViewTeam={(teamId, teamName) => {
+                    setViewedTeamId(teamId);
+                    setViewedTeamName(teamName);
+                    setCurrentScreen('team-profile');
+                  }}
+                />
+              )}
+
+              {currentScreen === 'team-profile' && viewedTeamId && (
+                <TeamProfileScreen
+                  teamId={viewedTeamId}
+                  teamName={viewedTeamName}
+                  onBack={() => setCurrentScreen('team-directory')}
+                  onViewPerson={(person) => {
+                    setViewedPerson(person);
+                    setCurrentScreen('my-profile');
+                  }}
+                />
               )}
 
               {currentScreen === 'roster-builder' && (
