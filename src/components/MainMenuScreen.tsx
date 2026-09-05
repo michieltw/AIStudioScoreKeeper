@@ -186,11 +186,11 @@ export default function MainMenuScreen({
           {activeTab === 'schedule' && (
             <div className="flex flex-col gap-4">
               {/* Recent Results (Past 2 games) */}
-              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
-                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Recent Results</span>
+              <div className="bg-card-gradient metallic-border rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
+                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505]/80 backdrop-blur-sm z-10 py-1 border-b border-[#2A2A2A] mb-1">Recent Results</span>
                 {pastGames.length > 0 ? (
                   pastGames.slice(-2).map(game => (
-                    <div key={game.id} className="w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 flex items-center justify-between">
+                    <div key={game.id} className="w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 flex items-center justify-between transition-colors">
                       <div className="flex flex-col flex-1">
                         <span className="text-sm font-bold text-white">{game.homeTeam} vs {game.awayTeam}</span>
                         <span className="text-[10px] font-mono text-gray-400">{game.date} • {game.location}</span>
@@ -206,8 +206,8 @@ export default function MainMenuScreen({
               </div>
 
               {/* Upcoming Games */}
-              <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
-                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505] z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
+              <div className="bg-card-gradient metallic-border rounded-lg p-2 max-h-48 overflow-y-auto flex flex-col gap-2 shadow-md">
+                <span className="text-[10px] font-mono text-gray-500 uppercase px-2 font-bold tracking-widest sticky top-0 bg-[#050505]/80 backdrop-blur-sm z-10 py-1 border-b border-[#2A2A2A] mb-1">Upcoming Games</span>
                 {scheduledGames.length > 0 ? (
                   scheduledGames.map(game => (
                     <button
@@ -215,7 +215,7 @@ export default function MainMenuScreen({
                       onClick={() => isPlayerPlus && onStartScheduledGame(game)}
                       disabled={!isPlayerPlus}
                       className={`w-full text-left bg-surface-container-low border border-outline-variant/30 rounded p-4 md:p-3 transition-colors flex items-center justify-between group ${
-                        isPlayerPlus ? 'hover:bg-white/5 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                        isPlayerPlus ? 'hover:bg-white/5 cursor-pointer hover:border-tertiary/30 soft-glow' : 'opacity-60 cursor-not-allowed'
                       }`}
                       title={!isPlayerPlus ? 'Guest accounts cannot start games' : undefined}
                     >
@@ -237,7 +237,7 @@ export default function MainMenuScreen({
 
           {/* Calendar View */}
           {activeTab === 'calendar' && (
-             <div className="bg-[#050505] border border-[#2A2A2A] rounded-lg p-4 flex flex-col gap-4 shadow-md h-96">
+             <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col gap-4 shadow-md h-96">
                 <div className="flex justify-between items-center border-b border-[#2A2A2A] pb-2">
                   <span className="text-sm font-bold text-white">Filter By:</span>
                   <div className="flex gap-2">

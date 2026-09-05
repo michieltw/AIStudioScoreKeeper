@@ -261,25 +261,25 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
                 {activeTab === 'overview' && (
                     <div className="flex flex-col gap-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm">
+                            <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm soft-glow">
                                 <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">Wins</span>
-                                <span className="text-2xl font-bold text-emerald-400">{stats.wins}</span>
+                                <span className="text-2xl font-bold text-emerald-400 glow-text">{stats.wins}</span>
                             </div>
-                            <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm">
+                            <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm soft-glow">
                                 <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">Losses</span>
-                                <span className="text-2xl font-bold text-red-400">{stats.losses}</span>
+                                <span className="text-2xl font-bold text-red-400 glow-text">{stats.losses}</span>
                             </div>
-                            <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm">
+                            <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm soft-glow">
                                 <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">Ties</span>
-                                <span className="text-2xl font-bold text-gray-300">{stats.ties}</span>
+                                <span className="text-2xl font-bold text-gray-300 glow-text">{stats.ties}</span>
                             </div>
-                             <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm">
+                             <div className="bg-card-gradient metallic-border rounded-lg p-4 flex flex-col items-center justify-center text-center gap-1 shadow-sm soft-glow">
                                 <span className="text-xs text-gray-500 font-mono uppercase tracking-widest">Roster Size</span>
-                                <span className="text-2xl font-bold text-white">{rosterData.length}</span>
+                                <span className="text-2xl font-bold text-white glow-text">{rosterData.length}</span>
                             </div>
                         </div>
 
-                        <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm mt-2">
+                        <div className="bg-card-gradient metallic-border rounded-lg p-5 shadow-sm mt-2">
                             <h3 className="text-white font-bold text-lg border-b border-[#2A2A2A] pb-3 mb-4 flex items-center gap-2">
                                 <Shield className="w-5 h-5 text-tertiary" />
                                 Team Info
@@ -304,7 +304,7 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
 
                 {/* TAB: Roster */}
                 {activeTab === 'roster' && (
-                    <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm">
+                    <div className="bg-card-gradient metallic-border rounded-lg p-5 shadow-sm">
                         <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3 mb-4">
                             <h3 className="text-white font-bold text-lg flex items-center gap-2">
                                 <Users className="w-5 h-5 text-tertiary" />
@@ -350,7 +350,7 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
 
                 {/* TAB: Schedule */}
                 {activeTab === 'schedule' && (
-                    <div className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 shadow-sm">
+                    <div className="bg-card-gradient metallic-border rounded-lg p-5 shadow-sm">
                         <div className="flex items-center justify-between border-b border-[#2A2A2A] pb-3 mb-4">
                             <h3 className="text-white font-bold text-lg flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-tertiary" />

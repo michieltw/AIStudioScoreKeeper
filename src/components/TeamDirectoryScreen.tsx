@@ -128,10 +128,10 @@ export default function TeamDirectoryScreen({ onBack, onViewTeam }: TeamDirector
                         {tierTeams.map(team => (
                           <div
                             key={team.id}
-                            className="bg-surface-container-low border border-[#2A2A2A] rounded-lg p-5 flex flex-col hover:border-tertiary/50 transition-colors group"
+                            className="metallic-surface metallic-border rounded-lg p-5 flex flex-col hover:border-tertiary/50 transition-colors group soft-glow"
                           >
                             <div className="flex items-center gap-4 mb-4">
-                              <div className="w-16 h-16 bg-surface-container-highest border border-[#2A2A2A] rounded-full flex items-center justify-center text-tertiary shadow-lg overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                              <div className="w-16 h-16 bg-surface-container-highest border border-[#2A2A2A] rounded-full flex items-center justify-center text-tertiary shadow-lg overflow-hidden shrink-0 group-hover:scale-105 transition-transform inner-glow">
                                 {team.logo_url ? (
                                   <img src={team.logo_url} alt={`${team.name} Logo`} className="w-12 h-12 object-contain" />
                                 ) : (
