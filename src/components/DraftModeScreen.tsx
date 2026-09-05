@@ -651,10 +651,10 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
 
         {/* Live On-The-Clock Banner */}
         {currentPick && currentTeam ? (
-          <div className={`border rounded-lg p-5 md:p-6 transition-all duration-300 relative overflow-hidden ${
+          <div className={`rounded-lg p-5 md:p-6 transition-all duration-300 relative overflow-hidden ${
             isManagerForCurrentTeam
-              ? 'bg-gradient-to-r from-tertiary/15 via-[#050505] to-[#050505] border-tertiary shadow-[0_0_30px_rgba(234,179,8,0.15)]'
-              : 'bg-[#050505] border-[#2A2A2A]'
+              ? 'metallic-surface border border-tertiary/40 soft-glow'
+              : 'bg-card-gradient metallic-border'
           }`}>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
               {/* Left Info */}
@@ -745,7 +745,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
 
         {/* Pick Announcement Notification */}
         {lastAnnouncedPick && (
-          <div className="bg-gradient-to-r from-emerald-950/40 via-[#050505] to-[#050505] border border-emerald-500/50 rounded-lg p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="metallic-surface border border-emerald-500/30 rounded-lg p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold shrink-0">
                 ✓
@@ -770,11 +770,11 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
 
         {/* Tab Headers */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#2A2A2A] pb-3">
-          <div className="flex bg-[#050505] border border-[#2A2A2A] rounded-lg p-1">
+          <div className="flex bg-[#050505]/50 border border-[#2A2A2A] rounded-lg p-1">
             <button
               onClick={() => setActiveTab('board')}
               className={`px-4 py-2 rounded font-mono text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 ${
-                activeTab === 'board' ? 'bg-tertiary text-black' : 'text-on-surface-variant hover:text-white'
+                activeTab === 'board' ? 'bg-surface-container-high text-tertiary shadow-sm' : 'text-on-surface-variant hover:text-white hover:bg-white/5'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -783,7 +783,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
             <button
               onClick={() => setActiveTab('pool')}
               className={`px-4 py-2 rounded font-mono text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 ${
-                activeTab === 'pool' ? 'bg-tertiary text-black' : 'text-on-surface-variant hover:text-white'
+                activeTab === 'pool' ? 'bg-surface-container-high text-tertiary shadow-sm' : 'text-on-surface-variant hover:text-white hover:bg-white/5'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
@@ -792,7 +792,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
             <button
               onClick={() => setActiveTab('rosters')}
               className={`px-4 py-2 rounded font-mono text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 ${
-                activeTab === 'rosters' ? 'bg-tertiary text-black' : 'text-on-surface-variant hover:text-white'
+                activeTab === 'rosters' ? 'bg-surface-container-high text-tertiary shadow-sm' : 'text-on-surface-variant hover:text-white hover:bg-white/5'
               }`}
             >
               <Shield className="w-3.5 h-3.5" />
@@ -802,10 +802,10 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
 
           <div className="flex items-center gap-3 text-xs font-mono text-on-surface-variant">
             <span>Progress: {picks.filter(p => p.personId).length} / {picks.length}</span>
-            <div className="w-24 h-2 bg-[#2A2A2A] rounded-full overflow-hidden">
+            <div className="w-24 h-2 bg-[#2A2A2A] rounded-full overflow-hidden shadow-inner">
               <div
                 className="h-full bg-tertiary transition-all duration-300"
-                style={{ width: `${picks.length ? (picks.filter(p => p.personId).length / picks.length) * 100 : 0}%` }}
+                style={{ width: `${picks.length ? (picks.filter(p => p.personId).length / picks.length) * 100 : 0}%`, boxShadow: '0 0 10px rgba(233,196,0,0.5)' }}
               />
             </div>
           </div>
@@ -1119,8 +1119,8 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
               return (
                 <div
                   key={team.id}
-                  className={`bg-[#050505] border rounded-lg p-5 flex flex-col gap-4 ${
-                    currentTeam?.id === team.id ? 'border-tertiary shadow-[0_0_15px_rgba(234,179,8,0.1)]' : 'border-[#2A2A2A]'
+                  className={`bg-card-gradient metallic-border rounded-lg p-5 flex flex-col gap-4 ${
+                    currentTeam?.id === team.id ? 'border-tertiary soft-glow' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
