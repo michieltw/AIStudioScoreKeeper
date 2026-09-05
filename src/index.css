@@ -59,16 +59,31 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0,0,0,0.5);
 }
 
-/* Settings styles */
+/* High-end Professional UI Enhancements */
 .bg-card-gradient {
-  background: linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%);
+  background: linear-gradient(135deg, #1f2122 0%, #151717 50%, #0c0f0f 100%);
 }
 .metallic-border {
-  border: 1px solid #2A2A2A;
-  border-top-color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.15);
+  border-bottom-color: rgba(0, 0, 0, 0.8);
+}
+.metallic-surface {
+  background: linear-gradient(180deg, rgba(40, 42, 43, 0.8) 0%, rgba(26, 28, 28, 0.9) 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
 }
 .inner-glow {
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.soft-glow {
+  box-shadow: 0 4px 20px -2px rgba(233, 196, 0, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+.soft-glow:hover {
+  box-shadow: 0 8px 30px -4px rgba(233, 196, 0, 0.25);
+}
+.glow-text {
+  text-shadow: 0 0 12px rgba(233, 196, 0, 0.4);
 }
 .input-focus:focus {
   border-color: #e9c400;
