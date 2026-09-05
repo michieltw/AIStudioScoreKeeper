@@ -181,7 +181,7 @@ export default function GameSummaryModal({
     document.body.removeChild(link);
 
     // Push to Google Sheets database if configured
-    const gasUrl = localStorage.getItem('blackout_gas_url');
+    const gasUrl = getGasUrl();
     const gasToken = localStorage.getItem('blackout_gas_token') || '';
     if (gasUrl && !isFinalized) {
       try {
@@ -193,6 +193,7 @@ export default function GameSummaryModal({
           HomeTeam: homeTeam,
           AwayTeam: awayTeam,
           Timestamp: e.time,
+          Period: e.period || '1',
           EventType: e.type,
           Team: e.team,
           Description: e.text,
@@ -241,7 +242,7 @@ export default function GameSummaryModal({
             game_events: logs.map(l => ({
               id: Date.now().toString() + Math.random(),
               game_id: game.EventID || game.GameID || Date.now().toString(),
-              period: "1",
+              period: l.Period,
               time_elapsed: l.Timestamp,
               trigger_event_type: l.EventType,
               trigger_team_id: l.Team,
