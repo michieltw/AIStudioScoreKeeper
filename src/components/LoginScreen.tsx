@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { Mail, Lock, LogIn, User as UserIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, Lock, LogIn, User as UserIcon, Trophy } from 'lucide-react';
 import { User } from '../types';
+import { fetchGasData } from '../utils/fetchGas';
+import { getGasUrl } from '../utils/gasUrl';
 
 interface LoginScreenProps {
   onLogin: (user: User) => void;
@@ -13,6 +15,63 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const [competitions, setCompetitions] = useState<any[]>([]);
+  const [selectedLeagueId, setSelectedLeagueId] = useState('');
+  const [isLoadingLeagues, setIsLoadingLeagues] = useState(true);
+
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      setIsLoadingLeagues(true);
+      const url = getGasUrl();
+      if (!url) {
+        setIsLoadingLeagues(false);
+        return;
+      }
+      try {
+        const res = await fetchGasData(url, { action: 'getEcosystemData', sheetName: 'competitions' });
+        if (res.ok) {
+          const resData = await res.json();
+          const data = resData.data || resData;
+          if (data && data.length > 1) {
+            const headers = data[0];
+            const idIdx = headers.indexOf('id');
+            const nameIdx = headers.indexOf('name');
+            if (idIdx !== -1 && nameIdx !== -1) {
+              const comps = data.slice(1).map((r: any) => ({
+                id: r[idIdx],
+                name: r[nameIdx]
+              }));
+              setCompetitions(comps);
+              if (comps.length > 0) {
+                setSelectedLeagueId(comps[0].id);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch leagues', err);
+      } finally {
+        setIsLoadingLeagues(false);
+      }
+    };
+    fetchLeagues();
+  }, []);
+
+  const getSelectedLeagueName = () => {
+    const comp = competitions.find(c => c.id === selectedLeagueId);
+    return comp ? comp.name : undefined;
+  };
+
+  const handleGuestLogin = () => {
+    onLogin({
+      id: 'guest',
+      email: 'guest@blackouthockey.com',
+      role: 'Guest',
+      leagueId: selectedLeagueId,
+      leagueName: getSelectedLeagueName()
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +93,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         const data = await res.json();
         if (data.success) {
           setError('');
-          onLogin(data.user);
+          onLogin({
+            ...data.user,
+            leagueId: selectedLeagueId,
+            leagueName: getSelectedLeagueName()
+          });
         } else {
           setError(data.message || (isSignUp ? 'Sign up failed' : 'Invalid email or password'));
         }
@@ -165,6 +228,36 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               </div>
             </div>
 
+            {/* League Selection Input */}
+            <div className="flex flex-col gap-1 mt-4">
+              <label className="font-mono text-[12px] font-bold tracking-widest text-on-surface-variant uppercase" htmlFor="league">
+                Select League
+              </label>
+              <div className="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded input-focus-ring transition-all duration-200">
+                <Trophy className="w-5 h-5 text-on-surface-variant absolute left-4 pointer-events-none" />
+                <select
+                  id="league"
+                  className="w-full bg-transparent border-none text-on-surface pl-12 pr-4 py-3 focus:ring-0 outline-none appearance-none cursor-pointer"
+                  value={selectedLeagueId}
+                  onChange={(e) => setSelectedLeagueId(e.target.value)}
+                  disabled={isLoadingLeagues}
+                  required
+                >
+                  {isLoadingLeagues ? (
+                    <option value="">Loading leagues...</option>
+                  ) : competitions.length > 0 ? (
+                    competitions.map(comp => (
+                      <option key={comp.id} value={comp.id} className="bg-surface-container text-on-surface">
+                        {comp.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">No leagues found</option>
+                  )}
+                </select>
+              </div>
+            </div>
+
             {/* Primary Action Button */}
             <button
               className="btn-primary w-full py-4 mt-6 rounded font-mono text-[12px] font-bold tracking-widest uppercase text-on-tertiary flex items-center justify-center gap-2 transition-transform duration-150 active:scale-95"
@@ -179,7 +272,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <button
               className="btn-secondary w-full py-3 rounded font-mono text-[12px] font-bold tracking-widest uppercase text-tertiary border border-tertiary hover:bg-tertiary/10 flex items-center justify-center gap-2 transition-transform duration-150 active:scale-95"
               type="button"
-              onClick={() => onLogin({ id: 'guest', email: 'guest@blackouthockey.com', role: 'Guest' })}
+              onClick={handleGuestLogin}
             >
               CONTINUE AS GUEST
             </button>

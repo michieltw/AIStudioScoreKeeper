@@ -4,7 +4,7 @@ import * as gasUrlModule from './utils/gasUrl';
 
 // Mock dependencies to avoid actual network requests and test timeouts
 vi.mock('./utils/gasUrl', () => ({
-  getGasUrl: vi.fn(() => null),
+  getGasUrl: vi.fn(() => 'https://script.google.com/macros/s/dummy/exec'),
   setGasUrl: vi.fn(),
 }));
 
@@ -12,12 +12,25 @@ describe('App Routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        user: { id: 'test', role: 'Admin', email: 'admin@blackout.com' }
-      })
+    global.fetch = vi.fn().mockImplementation(async (url) => {
+      if (url === '/api/login') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            user: { id: 'test', role: 'Admin', email: 'admin@blackout.com' }
+          }),
+          clone: function() { return this; }
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'Success',
+          data: [['id', 'name'], ['league-1', 'Test League']]
+        }),
+        clone: function() { return this; }
+      };
     });
   });
 
@@ -32,6 +45,8 @@ describe('App Routing', () => {
 
   it('navigates to MainMenuScreen after login', async () => {
     render(<App />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test League/i })).toBeInTheDocument());
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -51,6 +66,8 @@ describe('App Routing', () => {
   it('navigates to Dashboard via Sidebar', async () => {
     render(<App />);
 
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test League/i })).toBeInTheDocument());
+
     // Login
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -69,6 +86,8 @@ describe('App Routing', () => {
 
   it('restricts guests from starting games and viewing database', async () => {
     render(<App />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test League/i })).toBeInTheDocument());
 
     const guestButton = screen.getByRole('button', { name: /CONTINUE AS GUEST/i });
     fireEvent.click(guestButton);
@@ -90,15 +109,30 @@ describe('App Routing', () => {
 
   it('restricts player and team manager from viewing database', async () => {
     // Test Team Manager
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        user: { id: 'tm1', role: 'Team Manager', email: 'tm@blackout.com' }
-      })
+    global.fetch = vi.fn().mockImplementation(async (url) => {
+      if (url === '/api/login') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            user: { id: 'tm1', role: 'Team Manager', email: 'tm@blackout.com' }
+          }),
+          clone: function() { return this; }
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'Success',
+          data: [['id', 'name'], ['league-1', 'Test League']]
+        }),
+        clone: function() { return this; }
+      };
     });
 
     const { unmount } = render(<App />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test League/i })).toBeInTheDocument());
 
     const emailInput = screen.getByRole('textbox', { name: /email/i });
     const passwordInput = screen.getByLabelText(/password/i);
@@ -114,15 +148,30 @@ describe('App Routing', () => {
     unmount();
 
     // Test Player
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        user: { id: 'p1', role: 'Player', email: 'player@blackout.com' }
-      })
+    global.fetch = vi.fn().mockImplementation(async (url) => {
+      if (url === '/api/login') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            user: { id: 'p1', role: 'Player', email: 'player@blackout.com' }
+          }),
+          clone: function() { return this; }
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          status: 'Success',
+          data: [['id', 'name'], ['league-1', 'Test League']]
+        }),
+        clone: function() { return this; }
+      };
     });
 
     render(<App />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Test League/i })).toBeInTheDocument());
 
     const emailInput2 = screen.getByRole('textbox', { name: /email/i });
     const passwordInput2 = screen.getByLabelText(/password/i);
