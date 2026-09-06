@@ -23,11 +23,16 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   useEffect(() => {
     const fetchLeagues = async () => {
       setIsLoadingLeagues(true);
+      const fallbackDemoLeague = { id: 'demo-league', name: 'Demo League' };
       const url = getGasUrl();
+
       if (!url) {
+        setCompetitions([fallbackDemoLeague]);
+        setSelectedLeagueId(fallbackDemoLeague.id);
         setIsLoadingLeagues(false);
         return;
       }
+
       try {
         const res = await fetchGasData(url, { action: 'getEcosystemData', sheetName: 'competitions' });
         if (res.ok) {
@@ -42,15 +47,30 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 id: r[idIdx],
                 name: r[nameIdx]
               }));
-              setCompetitions(comps);
+
               if (comps.length > 0) {
+                setCompetitions(comps);
                 setSelectedLeagueId(comps[0].id);
+              } else {
+                setCompetitions([fallbackDemoLeague]);
+                setSelectedLeagueId(fallbackDemoLeague.id);
               }
+            } else {
+              setCompetitions([fallbackDemoLeague]);
+              setSelectedLeagueId(fallbackDemoLeague.id);
             }
+          } else {
+            setCompetitions([fallbackDemoLeague]);
+            setSelectedLeagueId(fallbackDemoLeague.id);
           }
+        } else {
+          setCompetitions([fallbackDemoLeague]);
+          setSelectedLeagueId(fallbackDemoLeague.id);
         }
       } catch (err) {
         console.error('Failed to fetch leagues', err);
+        setCompetitions([fallbackDemoLeague]);
+        setSelectedLeagueId(fallbackDemoLeague.id);
       } finally {
         setIsLoadingLeagues(false);
       }
