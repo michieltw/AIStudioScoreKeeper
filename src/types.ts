@@ -22,6 +22,8 @@ export interface User {
   role: 'Admin' | 'League Manager' | 'Team Manager' | 'Player' | 'Guest';
   personId?: string;
   username?: string;
+  leagueId?: string;
+  leagueName?: string;
 }
 
 export interface Person {
