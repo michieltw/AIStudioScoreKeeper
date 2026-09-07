@@ -1,6 +1,7 @@
 import { dbSchema } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
+import { parseIjnTableData } from '../utils/ijnParser';
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Filter, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 
@@ -30,6 +31,9 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
   const [goalies, setGoalies] = useState<any[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ijnStandings, setIjnStandings] = useState<any[][] | null>(null);
+  const [ijnLoading, setIjnLoading] = useState(false);
+  const [competitionsData, setCompetitionsData] = useState<any[][]>([]);
 
   // Filters state
   const [seasonFilter, setSeasonFilter] = useState<string>('All');
@@ -61,11 +65,17 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
       }
 
       try {
-        const [standingsRes, statsRes, goaliesRes] = await Promise.all([
+        const [standingsRes, statsRes, goaliesRes, compRes] = await Promise.all([
           fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'standings' }),
           fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'player_stats' }),
-          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'goalie_stats' }).catch(() => null)
+          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'goalie_stats' }).catch(() => null),
+          fetchGasData(`${gasUrl}`, { action: 'getEcosystemData', sheetName: 'competitions' }).catch(() => null)
         ]);
+
+        if (compRes) {
+           const compData = await compRes.json();
+           setCompetitionsData(ensure2DArray(compData.data || compData));
+        }
 
         const standingsResData = await standingsRes.json();
         const standingsRaw = standingsResData.data || standingsResData;

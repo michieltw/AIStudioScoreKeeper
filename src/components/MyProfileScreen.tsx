@@ -4,6 +4,7 @@ import { User, Achievement, Award } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
 import CountryFlag from './CountryFlag';
+import { parseIjnTableData } from '../utils/ijnParser';
 
 interface MyProfileScreenProps {
   viewedPerson?: any;
@@ -21,6 +22,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
   const [equipmentData, setEquipmentData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ijnData, setIjnData] = useState<any>(null);
+  const [ijnLoading, setIjnLoading] = useState(false);
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingEquipment, setIsEditingEquipment] = useState(false);
@@ -229,6 +232,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
       gender: profileData?.gender || 'Male',
       visibility: profileData?.visibility || 'Public',
       ijn_bondsnummer: profileData?.ijn_bondsnummer || '',
+      ijn_id: profileData?.ijn_id || '',
       jersey_number: profileData?.jersey_number || '',
       playstyle: profileData?.playstyle || '',
       status: profileData?.status || 'Active',
@@ -258,6 +262,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         gender: editProfileForm.gender || '',
         visibility: editProfileForm.visibility || 'Public',
         ijn_bondsnummer: editProfileForm.ijn_bondsnummer || '',
+        ijn_id: editProfileForm.ijn_id || '',
         jersey_number: editProfileForm.jersey_number || '',
         playstyle: editProfileForm.playstyle || '',
         status: editProfileForm.status || 'Active',
@@ -1655,6 +1660,23 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                       onChange={e => setEditProfileForm({ ...editProfileForm, ijn_bondsnummer: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     />
+                  </div>
+                  <div className="flex flex-col gap-1 md:col-span-2">
+                    <label className="text-xs text-on-surface-variant font-medium">IJshockey Nederland Profiel URL</label>
+                    <input
+                      type="text"
+                      placeholder="https://www.ijshockey.nl/competities/players?player=12345"
+                      value={editProfileForm.ijn_id || ''}
+                      onChange={e => {
+                         let val = e.target.value;
+                         if (val.includes('player=')) {
+                            val = val.split('player=')[1].split('&')[0];
+                         }
+                         setEditProfileForm({ ...editProfileForm, ijn_id: val });
+                      }}
+                      className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors font-mono text-xs"
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1">Plak hier de link van je IJshockey Nederland profiel om live statistieken te koppelen.</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Nationality</label>
