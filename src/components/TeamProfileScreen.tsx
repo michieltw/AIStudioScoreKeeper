@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, Users, Calendar, MapPin, Trophy, Shield, ExternalLink, Loader2 } from 'lucide-react';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
+import { parseIjnTableData } from '../utils/ijnParser';
 
 interface TeamProfileScreenProps {
   teamId: string;
@@ -17,6 +18,8 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
   const [teamData, setTeamData] = useState<any>(null);
   const [rosterData, setRosterData] = useState<any[]>([]);
   const [scheduleData, setScheduleData] = useState<any[]>([]);
+  const [ijnData, setIjnData] = useState<any>(null);
+  const [ijnLoading, setIjnLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -177,6 +180,33 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
       losses: scheduleData.filter(g => g.status?.toLowerCase() === 'completed' && ((g.homeTeamId === teamId && g.homeScore < g.awayScore) || (g.awayTeamId === teamId && g.awayScore < g.homeScore))).length,
       ties: scheduleData.filter(g => g.status?.toLowerCase() === 'completed' && g.homeScore === g.awayScore).length,
   };
+
+  useEffect(() => {
+    const fetchIjnData = async (ijnId: string) => {
+      setIjnLoading(true);
+      try {
+        const targetUrl = `https://www.ijshockey.nl/competities/teams?team=${ijnId}`;
+        const res = await fetch(`/api/scrape/ijn?url=${encodeURIComponent(targetUrl)}`);
+        if (!res.ok) throw new Error('Failed to proxy IJN');
+        const html = await res.text();
+
+        const extractedStats = parseIjnTableData(html);
+        setIjnData(extractedStats);
+      } catch (e) {
+        console.error("Error fetching live IJN data:", e);
+      } finally {
+        setIjnLoading(false);
+      }
+    };
+
+    if (teamData?.ijn_id) {
+       let parsedId = teamData.ijn_id;
+       if (parsedId.includes('team=')) {
+          parsedId = parsedId.split('team=')[1].split('&')[0];
+       }
+       fetchIjnData(parsedId);
+    }
+  }, [teamData?.ijn_id]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">

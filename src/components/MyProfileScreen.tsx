@@ -4,6 +4,7 @@ import { User, Achievement, Award } from '../types';
 import { getGasUrl } from '../utils/gasUrl';
 import { fetchGasData } from '../utils/fetchGas';
 import CountryFlag from './CountryFlag';
+import { parseIjnTableData } from '../utils/ijnParser';
 
 interface MyProfileScreenProps {
   viewedPerson?: any;
