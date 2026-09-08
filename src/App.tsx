@@ -21,6 +21,7 @@ import StandingsScreen from './components/StandingsScreen';
 import RulebookScreen from './components/RulebookScreen';
 import PlayersScreen from './components/PlayersScreen';
 import ScoresScreen from './components/ScoresScreen';
+import EventPlannerScreen from './components/EventPlannerScreen';
 import { Screen, Player, User } from './types';
 import { defaultSettingsContract } from './settingsContract';
 
@@ -159,6 +160,12 @@ export default function App() {
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'calendar' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
             Schedule
+          </button>
+          <button
+            onClick={() => navigateTo('event-planner')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'event-planner' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Planner
           </button>
           <button 
             onClick={() => navigateTo('stats')} 
@@ -400,6 +407,10 @@ export default function App() {
 
               {currentScreen === 'calendar' && (
                 <CalendarScreen onBack={() => setCurrentScreen('main-menu')} />
+              )}
+
+              {currentScreen === 'event-planner' && (
+                <EventPlannerScreen currentUser={currentUser} onBack={() => setCurrentScreen('main-menu')} />
               )}
 
               {currentScreen === 'lineup-builder' && (
