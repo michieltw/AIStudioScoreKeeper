@@ -300,7 +300,7 @@ function calculateStandingsAndStats() {
       }
       playerTeams[player] = team;
 
-      if (eventType === 'goal') {
+      if (typeof eventType === 'string' && eventType.includes('goal')) {
         stats[player].G++;
         stats[player].PTS++;
 
@@ -316,7 +316,7 @@ function calculateStandingsAndStats() {
           stats[assist2].PTS++;
           playerTeams[assist2] = team;
         }
-      } else if (eventType === 'penalty') {
+      } else if (typeof eventType === 'string' && eventType.includes('penalty')) {
         stats[player].PIM += penaltyMinutes;
       }
     }

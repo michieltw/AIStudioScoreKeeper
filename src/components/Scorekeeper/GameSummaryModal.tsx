@@ -243,7 +243,7 @@ export default function GameSummaryModal({
               id: Date.now().toString() + Math.random(),
               game_id: game.EventID || game.GameID || Date.now().toString(),
               period: l.Period,
-              time_elapsed: l.Timestamp,
+              time_left: l.Timestamp,
               trigger_event_type: l.EventType,
               trigger_team_id: l.Team,
               description: l.Description,
