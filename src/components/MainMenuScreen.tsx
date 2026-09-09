@@ -54,7 +54,7 @@ export default function MainMenuScreen({
             const homeScoreIdx = headers.indexOf('home_score');
             const awayScoreIdx = headers.indexOf('away_score');
 
-            const scheduled = rows.filter((r: any) => r[statusIdx] === 'scheduled').map((row: any[]) => ({
+            const scheduled = rows.filter((r: any) => r[statusIdx]?.toLowerCase() === 'scheduled').map((row: any[]) => ({
               id: row[idIdx],
               homeTeam: row[homeTeamIdx],
               awayTeam: row[awayTeamIdx],
@@ -65,7 +65,7 @@ export default function MainMenuScreen({
               matchType: 'Game'
             }));
 
-            const completed = rows.filter((r: any) => r[statusIdx] === 'completed').map((row: any[]) => ({
+            const completed = rows.filter((r: any) => r[statusIdx]?.toLowerCase() === 'completed').map((row: any[]) => ({
               id: row[idIdx],
               date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',
               homeTeam: row[homeTeamIdx],
