@@ -22,6 +22,7 @@ import RulebookScreen from './components/RulebookScreen';
 import PlayersScreen from './components/PlayersScreen';
 import ScoresScreen from './components/ScoresScreen';
 import EventPlannerScreen from './components/EventPlannerScreen';
+import TeamstoreScreen from './components/TeamstoreScreen';
 import { Screen, Player, User } from './types';
 import { defaultSettingsContract } from './settingsContract';
 
@@ -166,6 +167,12 @@ export default function App() {
             className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'event-planner' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
           >
             Planner
+          </button>
+          <button
+            onClick={() => navigateTo('teamstore')}
+            className={`flex items-center justify-start p-2.5 rounded hover:bg-white/5 transition-colors ${currentScreen === 'teamstore' ? 'bg-white/10 text-white border border-white/20' : 'border border-transparent'}`}
+          >
+            Teamstore
           </button>
           <button 
             onClick={() => navigateTo('stats')} 
@@ -411,6 +418,10 @@ export default function App() {
 
               {currentScreen === 'event-planner' && (
                 <EventPlannerScreen currentUser={currentUser} onBack={() => setCurrentScreen('main-menu')} />
+              )}
+
+              {currentScreen === 'teamstore' && (
+                <TeamstoreScreen onBack={() => setCurrentScreen('main-menu')} />
               )}
 
               {currentScreen === 'lineup-builder' && (
