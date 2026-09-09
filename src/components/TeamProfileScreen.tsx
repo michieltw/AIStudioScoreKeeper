@@ -149,7 +149,7 @@ export default function TeamProfileScreen({ teamId, teamName, onBack, onViewPers
                         awayTeamId: g[gAwayTeamIdx],
                         homeTeamName: teamNameMap[g[gHomeTeamIdx]] || 'Unknown Home',
                         awayTeamName: teamNameMap[g[gAwayTeamIdx]] || 'Unknown Away',
-                        status: g[gStatusIdx] || 'Scheduled',
+                        status: g[gStatusIdx] || 'scheduled',
                         date: g[gScheduledAtIdx] ? String(g[gScheduledAtIdx]).substring(0, 10) : 'TBD',
                         homeScore: g[gHomeScoreIdx] || 0,
                         awayScore: g[gAwayScoreIdx] || 0

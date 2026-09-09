@@ -314,7 +314,7 @@ export default function CalendarScreen({ onBack }: CalendarScreenProps) {
                     <div className="flex flex-col sm:flex-row items-stretch">
                       <div className="flex-1 p-4 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-primary/20">
                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-gray-400">{event.time} {event.status && event.status !== 'Scheduled' && `• ${event.status}`}</span>
+                            <span className="text-sm text-gray-400">{event.time} {event.status && event.status?.toLowerCase() !== 'scheduled' && `• ${event.status}`}</span>
                          </div>
                          <div className="flex items-center justify-between mb-2">
                            <div className="flex items-center gap-3">

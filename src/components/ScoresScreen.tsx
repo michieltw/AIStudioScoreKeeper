@@ -116,7 +116,7 @@ export default function ScoresScreen({ onBack }: ScoresScreenProps) {
                 if (row[idIdx]) {
                    const status = statusIdx !== -1 ? row[statusIdx] : undefined;
                    // Only include completed games
-                   if (status === 'Completed' || (row[homeScoreIdx] !== undefined && row[homeScoreIdx] !== '' && row[awayScoreIdx] !== undefined && row[awayScoreIdx] !== '')) {
+                   if (status?.toLowerCase() === 'completed' || (row[homeScoreIdx] !== undefined && row[homeScoreIdx] !== '' && row[awayScoreIdx] !== undefined && row[awayScoreIdx] !== '')) {
                      const hTeamId = homeTeamIdx !== -1 ? row[homeTeamIdx] : undefined;
                      const aTeamId = awayTeamIdx !== -1 ? row[awayTeamIdx] : undefined;
                      const vId = venueIdx !== -1 ? row[venueIdx] : undefined;
@@ -243,7 +243,7 @@ export default function ScoresScreen({ onBack }: ScoresScreenProps) {
                         <CalendarIcon className="w-4 h-4" />
                         <span>{game.date} • {game.time}</span>
                       </div>
-                      {game.status && game.status !== 'Completed' && (
+                      {game.status && game.status?.toLowerCase() !== 'completed' && (
                         <span className="text-xs px-2 py-0.5 bg-surface-container rounded-full text-on-surface-variant">
                           {game.status}
                         </span>

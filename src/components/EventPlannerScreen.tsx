@@ -158,7 +158,7 @@ export default function EventPlannerScreen({ currentUser, onBack }: EventPlanner
            away_team_id: awayTeamId,
            venue_id: venueId,
            scheduled_at: datetime,
-           status: 'Scheduled',
+           status: 'scheduled',
            notes: notes,
            created_at: new Date().toISOString()
         };
@@ -201,7 +201,7 @@ export default function EventPlannerScreen({ currentUser, onBack }: EventPlanner
                 rsvpId,
                 generatedId,
                 pId,
-                'Invited',
+                'not_responded',
                 '',
                 new Date().toISOString()
              ];
