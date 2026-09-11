@@ -230,7 +230,7 @@ export default function GameSummaryModal({
           action: 'saveGame',
           newSchema: {
             games: [{
-              id: game.EventID || game.GameID || Date.now().toString(),
+              id: eventId || gameId,
               season_id: "current",
               home_team_id: game.HomeTeam,
               away_team_id: game.AwayTeam,
@@ -241,7 +241,7 @@ export default function GameSummaryModal({
             }],
             game_events: logs.map(l => ({
               id: Date.now().toString() + Math.random(),
-              game_id: game.EventID || game.GameID || Date.now().toString(),
+              game_id: eventId || gameId,
               period: l.Period,
               time_left: l.Timestamp,
               trigger_event_type: l.EventType,
