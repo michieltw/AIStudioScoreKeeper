@@ -256,7 +256,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         weight_kg: editProfileForm.weight_kg || '',
         plays_position: editProfileForm.plays_position || '',
         secondary_position: editProfileForm.secondary_position || '',
-        shoots: editProfileForm.shoots || 'Right',
+        shoots: editProfileForm.shoots || 'right',
         nationality: editProfileForm.nationality || '',
         date_of_birth: editProfileForm.date_of_birth || '',
         gender: editProfileForm.gender || '',
@@ -265,7 +265,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         ijn_id: editProfileForm.ijn_id || '',
         jersey_number: editProfileForm.jersey_number || '',
         playstyle: editProfileForm.playstyle || '',
-        status: editProfileForm.status || 'Active',
+        status: editProfileForm.status || 'active',
         bio: editProfileForm.bio || ''
       };
 
@@ -1557,47 +1557,47 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Primary Position</label>
                     <select
-                      value={editProfileForm.plays_position || 'Center'}
+                      value={editProfileForm.plays_position || 'center'}
                       onChange={e => setEditProfileForm({ ...editProfileForm, plays_position: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="Center">Center</option>
-                      <option value="Left Wing">Left Wing</option>
-                      <option value="Right Wing">Right Wing</option>
-                      <option value="Forward">Forward</option>
-                      <option value="Defense">Defense</option>
-                      <option value="Goalie">Goalie</option>
-                      <option value="Coach">Coach</option>
-                      <option value="Referee">Referee</option>
-                      <option value="Team Manager">Team Manager</option>
-                      <option value="Player">Player</option>
+                      <option value="center">Center</option>
+                      <option value="left_wing">Left Wing</option>
+                      <option value="right_wing">Right Wing</option>
+                      <option value="forward">Forward</option>
+                      <option value="defense">Defense</option>
+                      <option value="goalie">Goalie</option>
+                      <option value="coach">Coach</option>
+                      <option value="referee">Referee</option>
+                      <option value="team_manager">Team Manager</option>
+                      <option value="player">Player</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Secondary Position</label>
                     <select
-                      value={editProfileForm.secondary_position || 'None'}
+                      value={editProfileForm.secondary_position || 'none'}
                       onChange={e => setEditProfileForm({ ...editProfileForm, secondary_position: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="None">None</option>
-                      <option value="Center">Center</option>
-                      <option value="Left Wing">Left Wing</option>
-                      <option value="Right Wing">Right Wing</option>
-                      <option value="Forward">Forward</option>
-                      <option value="Defense">Defense</option>
-                      <option value="Goalie">Goalie</option>
+                      <option value="none">None</option>
+                      <option value="center">Center</option>
+                      <option value="left_wing">Left Wing</option>
+                      <option value="right_wing">Right Wing</option>
+                      <option value="forward">Forward</option>
+                      <option value="defense">Defense</option>
+                      <option value="goalie">Goalie</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Shoots / Handedness</label>
                     <select
-                      value={editProfileForm.shoots || 'Right'}
+                      value={editProfileForm.shoots || 'right'}
                       onChange={e => setEditProfileForm({ ...editProfileForm, shoots: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="Left">Left</option>
-                      <option value="Right">Right</option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -1623,13 +1623,13 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Status</label>
                     <select
-                      value={editProfileForm.status || 'Active'}
+                      value={editProfileForm.status || 'active'}
                       onChange={e => setEditProfileForm({ ...editProfileForm, status: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                      <option value="Retired">Retired</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="retired">Retired</option>
                     </select>
                   </div>
                   <div className="flex flex-col gap-1 sm:col-span-3">
@@ -1700,14 +1700,14 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                   <div className="flex flex-col gap-1">
                     <label className="text-xs text-on-surface-variant font-medium">Gender</label>
                     <select
-                      value={editProfileForm.gender || 'Male'}
+                      value={editProfileForm.gender || 'male'}
                       onChange={e => setEditProfileForm({ ...editProfileForm, gender: e.target.value })}
                       className="bg-[#080808] border border-[#2A2A2A] rounded-lg px-3 py-2 text-white focus:border-tertiary focus:outline-none transition-colors"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer not to say">Prefer not to say</option>
                     </select>
                   </div>
                 </div>

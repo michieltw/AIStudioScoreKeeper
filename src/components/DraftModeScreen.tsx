@@ -299,7 +299,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
               previousTeamCode: row[prevTeamIdx] || 'FA',
               previousAav: row[prevAavIdx] ? `€${Number(row[prevAavIdx]).toLocaleString()}` : '€15,000',
               yearsOfExperience: row[yoeIdx] || 2,
-              status: isSigned ? 'Drafted' : (row[statusIdx] || 'Available'),
+              status: isSigned ? 'drafted' : (row[statusIdx] || 'available'),
               isSigned,
               signedTeamId: row[signedTeamIdx] || '',
               playstyle: person.playstyle || 'All-Around'
@@ -438,7 +438,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
         if (p.id === player.id) {
           return {
             ...p,
-            status: 'Drafted',
+            status: 'drafted',
             isSigned: true,
             signedTeamId: currentTeam.id
           };
@@ -484,7 +484,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
           idColumn: 'person_id',
           idValue: player.id,
           updateData: {
-            status: 'Drafted',
+            status: 'drafted',
             is_signed: true,
             signed_team_id: currentTeam.id
           }
@@ -520,7 +520,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
   // Auto-Pick / Simulate Pick for CPU or fast-forward
   const handleAutoPick = () => {
     if (!currentPick || !currentTeam) return;
-    const available = players.filter(p => !p.isSigned && p.status !== 'Drafted');
+    const available = players.filter(p => !p.isSigned && p.status !== 'drafted');
     if (available.length === 0) return;
 
     // Pick top available player
@@ -542,7 +542,7 @@ export default function DraftModeScreen({ currentUser, onBack }: DraftModeScreen
   // Filtered available players
   const filteredAvailablePlayers = useMemo(() => {
     return players.filter(p => {
-      const isAvailable = !p.isSigned && p.status !== 'Drafted';
+      const isAvailable = !p.isSigned && p.status !== 'drafted';
       const matchesSearch = p.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.nationality && p.nationality.toLowerCase().includes(searchQuery.toLowerCase()));
