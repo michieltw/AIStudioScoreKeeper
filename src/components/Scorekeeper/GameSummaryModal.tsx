@@ -185,8 +185,24 @@ export default function GameSummaryModal({
     const gasToken = localStorage.getItem('blackout_gas_token') || '';
     if (gasUrl && !isFinalized) {
       try {
+                const mapEventType = (event: GameEvent) => {
+          switch(event.type) {
+            case 'shot': return 'shot_on_goal';
+            case 'penalty': return 'penalty';
+            case 'faceoff': return 'faceoff_won';
+            case 'icing': return 'icing';
+            case 'offside': return 'offside';
+            case 'goal':
+              if (event.situation === 'PP') return 'goal_power_play_5v4'; // simplified assumption
+              if (event.situation === 'SH') return 'goal_shorthanded_4v5'; // simplified assumption
+              return 'goal_even_strength';
+            default: return 'other';
+          }
+        };
+
         const gameId = `${now}_${cleanHome}_${cleanAway}_${Date.now()}`;
         const logs = activeEvents.map(e => ({
+          ClockTime: e.clockTime || e.time.split(' ')[0],
           GameID: gameId,
           EventID: eventId || '',
           Date: date || now,
@@ -194,7 +210,7 @@ export default function GameSummaryModal({
           AwayTeam: awayTeam,
           Timestamp: e.time,
           Period: e.period || '1',
-          EventType: e.type,
+          EventType: mapEventType(e),
           Team: e.team,
           Description: e.text,
           X: e.x !== undefined ? Math.round(e.x) : '',
@@ -243,7 +259,7 @@ export default function GameSummaryModal({
               id: Date.now().toString() + Math.random(),
               game_id: eventId || gameId,
               period: l.Period,
-              time_left: l.Timestamp,
+              time_left: l.ClockTime,
               trigger_event_type: l.EventType,
               trigger_team_id: l.Team,
               description: l.Description,
