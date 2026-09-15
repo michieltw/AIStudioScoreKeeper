@@ -193,6 +193,7 @@ export default function GameSummaryModal({
           HomeTeam: homeTeam,
           AwayTeam: awayTeam,
           Timestamp: e.time,
+          ClockTime: e.clockTime || e.time,
           Period: e.period || '1',
           EventType: e.type,
           Team: e.team,
@@ -239,13 +240,22 @@ export default function GameSummaryModal({
               away_score: game.AwayScore,
               status: "completed"
             }],
-            game_events: logs.map(l => ({
-              id: Date.now().toString() + Math.random(),
-              game_id: eventId || gameId,
-              period: l.Period,
-              time_left: l.Timestamp,
-              trigger_event_type: l.EventType,
-              trigger_team_id: l.Team,
+            game_events: logs.map(l => {
+              let mappedEventType = 'other';
+              if (l.EventType === 'shot') mappedEventType = 'shot_on_goal';
+              else if (l.EventType === 'goal') mappedEventType = 'goal_even_strength';
+              else if (l.EventType === 'penalty') mappedEventType = 'penalty';
+              else if (l.EventType === 'faceoff') mappedEventType = 'faceoff_won';
+              else if (l.EventType === 'icing') mappedEventType = 'icing';
+              else if (l.EventType === 'offside') mappedEventType = 'offside';
+
+              return {
+                id: Date.now().toString() + Math.random(),
+                game_id: eventId || gameId,
+                period: l.Period,
+                time_left: l.ClockTime,
+                trigger_event_type: mappedEventType,
+                trigger_team_id: l.Team,
               description: l.Description,
               x_coordinate: l.X,
               y_coordinate: l.Y,
@@ -253,7 +263,8 @@ export default function GameSummaryModal({
               first_assist_player_id: l.Assist1,
               second_assist_player_id: l.Assist2,
               penalty_duration: l.PenaltyMinutes
-            }))
+              };
+            })
           }
         });
 
