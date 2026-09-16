@@ -524,6 +524,11 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         // Simplification: generate a unique ID based on person+event.
         const rsvpId = `rsvp-${personId}-${eventId}`;
 
+        let backendStatus = 'not_responded';
+        if (status === 'Attending') backendStatus = 'accepted';
+        else if (status === 'Not Attending') backendStatus = 'declined';
+        else if (status === 'Maybe') backendStatus = 'tentative';
+
         await fetchGasData(url, {
             action: 'updateRow',
             sheetName: 'event_rsvps',
@@ -532,7 +537,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             updateData: {
                 event_id: eventId,
                 person_id: personId,
-                rsvp_status: status
+                rsvp_status: backendStatus
             }
         });
     } catch(e: any) {
