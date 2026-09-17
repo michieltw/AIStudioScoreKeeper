@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import * as gasUrlModule from './utils/gasUrl';

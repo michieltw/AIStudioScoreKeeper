@@ -227,12 +227,22 @@ export default function GameSummaryModal({
           Division: randomDivision
         };
 
+        // Retrieve season from configuration or fallback to "current"
+        const savedConfigStr = localStorage.getItem('blackout_hockey_current_config');
+        let currentSeason = "current";
+        if (savedConfigStr) {
+          try {
+            const savedConfig = JSON.parse(savedConfigStr);
+            if (savedConfig.seasonId) currentSeason = savedConfig.seasonId;
+          } catch(e) {}
+        }
+
         await fetchGasData(gasUrl, {
           action: 'saveGame',
           newSchema: {
             games: [{
               id: eventId || gameId,
-              season_id: "current",
+              season_id: currentSeason,
               home_team_id: game.HomeTeam,
               away_team_id: game.AwayTeam,
               venue_id: game.Location,
@@ -270,6 +280,7 @@ export default function GameSummaryModal({
 
         // Clear cache so that Stats and Standings update with the new game
         clearGasCache();
+        localStorage.removeItem('blackout_hockey_saved_game');
       } catch (err) {
         console.error("Failed to push to database:", err);
       }

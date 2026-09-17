@@ -99,6 +99,7 @@ export interface SettingsContract {
 interface SettingsScreenProps {
   scheduledGameData?: {
     id?: string;
+    seasonId?: string;
     homeTeam: string;
     awayTeam: string;
     homeRoster?: Player[];
@@ -457,6 +458,7 @@ export default function SettingsScreen({ scheduledGameData, contract, onStart, o
 
     const config: GameConfig = {
       eventId: scheduledGameData?.id,
+      seasonId: scheduledGameData?.seasonId || "current",
       homeTeam: finalHome,
       awayTeam: finalAway,
       homeColor,

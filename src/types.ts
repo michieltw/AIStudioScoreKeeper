@@ -234,6 +234,7 @@ export interface GameSettings {
 
 export interface GameConfig {
   eventId?: string;
+  seasonId?: string;
   homeTeam: string;
   awayTeam: string;
   homeColor?: string;

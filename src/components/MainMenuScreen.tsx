@@ -50,12 +50,14 @@ export default function MainMenuScreen({
             const homeTeamIdx = headers.indexOf('home_team_id');
             const awayTeamIdx = headers.indexOf('away_team_id');
             const scheduledAtIdx = headers.indexOf('scheduled_at');
+            const seasonIdIdx = headers.indexOf('season_id');
             const venueIdx = headers.indexOf('venue_id');
             const homeScoreIdx = headers.indexOf('home_score');
             const awayScoreIdx = headers.indexOf('away_score');
 
             const scheduled = rows.filter((r: any) => r[statusIdx]?.toLowerCase() === 'scheduled').map((row: any[]) => ({
               id: row[idIdx],
+              seasonId: row[seasonIdIdx],
               homeTeam: row[homeTeamIdx],
               awayTeam: row[awayTeamIdx],
               date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',

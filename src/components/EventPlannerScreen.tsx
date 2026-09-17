@@ -194,10 +194,9 @@ export default function EventPlannerScreen({ currentUser, onBack }: EventPlanner
 
         // If Invite-Only, save RSVPs
         if (eventType === 'Invite-Only' && selectedPersons.length > 0) {
-           for (const pId of selectedPersons) {
+           const rsvpRows = selectedPersons.map(pId => {
              const rsvpId = `rsvp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-             // "event_rsvps": ["id", "event_id", "person_id", "rsvp_status", "responded_at", "created_at"]
-             const rsvpRow = [
+             return [
                 rsvpId,
                 generatedId,
                 pId,
@@ -205,12 +204,12 @@ export default function EventPlannerScreen({ currentUser, onBack }: EventPlanner
                 '',
                 new Date().toISOString()
              ];
-             await fetchGasData(url, {
-               action: 'saveEcosystemData',
-               sheetName: 'event_rsvps',
-               rowData: rsvpRow
-             });
-           }
+           });
+           await fetchGasData(url, {
+             action: 'saveEcosystemData',
+             sheetName: 'event_rsvps',
+             rowData: rsvpRows
+           });
         }
       }
 
