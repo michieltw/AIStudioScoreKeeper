@@ -510,7 +510,12 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
     }
   };
 
-  const handleRsvpChange = async (eventId: string, status: string) => {
+  const handleRsvpChange = async (eventId: string, uiStatus: string) => {
+    // Map UI status to DB enum
+    let status = 'not_responded';
+    if (uiStatus === 'Attending') status = 'accepted';
+    else if (uiStatus === 'Not Attending') status = 'declined';
+    else if (uiStatus === 'Maybe') status = 'tentative';
     setRsvps(prev => ({ ...prev, [eventId]: status })); // optimistic update
 
     if (!personId) return;
@@ -1146,7 +1151,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                             key={status}
                                             onClick={() => handleRsvpChange(event.id, status)}
                                             className={`flex-1 sm:flex-none px-3 py-1.5 text-sm font-bold rounded-md transition-colors ${
-                                                rsvps[event.id] === status
+                                                rsvps[event.id] === (status === 'Attending' ? 'accepted' : status === 'Not Attending' ? 'declined' : status === 'Maybe' ? 'tentative' : 'not_responded')
                                                     ? 'bg-tertiary text-black'
                                                     : 'bg-surface-container-highest text-on-surface-variant hover:text-white'
                                             }`}

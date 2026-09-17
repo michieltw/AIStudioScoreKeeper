@@ -389,7 +389,12 @@ function doPost(e) {
       if (!sheet) throw new Error("Sheet niet gevonden: " + sheetName);
 
       if (Array.isArray(rowData)) {
+        if (rowData.length > 0 && Array.isArray(rowData[0])) {
+          const sanitizedData = rowData.map(row => row.map(sanitizeField));
+          sheet.getRange(sheet.getLastRow() + 1, 1, sanitizedData.length, sanitizedData[0].length).setValues(sanitizedData);
+        } else {
         sheet.appendRow(rowData.map(sanitizeField));
+        }
       }
       return ContentService.createTextOutput(JSON.stringify({status: "Success"})).setMimeType(ContentService.MimeType.JSON);
     }
