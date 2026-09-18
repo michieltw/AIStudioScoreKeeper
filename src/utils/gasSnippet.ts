@@ -23,7 +23,7 @@ export const generateGasCodeSnippet = (token: string) => `function setupSheet() 
     "special_team_type": ["power_play", "penalty_kill", "even_strength"],
 
     // Games & Events
-    "event_type": ["game", "practice", "scrimmage", "training", "friendly_match"],
+    "event_type": ["game", "practice", "scrimmage", "training", "friendly_match", "meeting", "invite_only"],
     "game_status": ["scheduled", "in_progress", "pre_game", "completed", "postponed", "cancelled"],
     "rsvp_status": ["accepted", "declined", "tentative", "not_responded"],
     "trigger_event_type": [
@@ -512,6 +512,20 @@ function doPost(e) {
           }
           const headers = dbSchema["game_events"];
           data.newSchema.game_events.forEach(e => {
+            // Map frontend generic event types to strictly allowed enums
+            let mappedEventType = e.trigger_event_type;
+            if (mappedEventType === 'goal') mappedEventType = 'goal_even_strength';
+            else if (mappedEventType === 'shot') mappedEventType = 'shot_on_goal';
+            else if (mappedEventType === 'faceoff') mappedEventType = 'faceoff_won';
+            else if (mappedEventType === 'penalty') mappedEventType = 'penalty';
+            else if (mappedEventType === 'icing') mappedEventType = 'icing';
+            else if (mappedEventType === 'offside') mappedEventType = 'offside';
+
+            // Re-assign mapped type if changed
+            if (mappedEventType !== e.trigger_event_type) {
+                e.trigger_event_type = mappedEventType;
+            }
+
             const row = headers.map(h => sanitizeField(e[h] || ''));
             eventsSheet.appendRow(row);
           });

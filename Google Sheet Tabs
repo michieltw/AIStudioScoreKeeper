@@ -20,7 +20,7 @@ const enumLookups = {
   "special_team_type": ["power_play", "penalty_kill", "even_strength"],
 
   // Games & Events
-  "event_type": ["game", "practice", "scrimmage", "training", "friendly_match"],
+  "event_type": ["game", "practice", "scrimmage", "training", "friendly_match", "meeting", "invite_only"],
   "game_status": ["scheduled", "in_progress", "pre_game", "completed", "postponed", "cancelled"],
   "rsvp_status": ["accepted", "declined", "tentative", "not_responded"],
   "trigger_event_type": [
