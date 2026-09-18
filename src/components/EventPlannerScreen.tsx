@@ -175,10 +175,13 @@ export default function EventPlannerScreen({ currentUser, onBack }: EventPlanner
 
         // Let's fetch headers first, but we know them from types:
         // "events": ["id", "team_id", "event_type", "scheduled_at", "venue_id", "notes", "created_at", "updated_at"]
+        let dbEventType = eventType.toLowerCase();
+        if (dbEventType === 'invite-only') dbEventType = 'invite_only';
+
         const eventsRow = [
            generatedId,
            eventType === 'Invite-Only' ? '' : teamId,
-           eventType,
+           dbEventType,
            datetime,
            venueId,
            notes,
