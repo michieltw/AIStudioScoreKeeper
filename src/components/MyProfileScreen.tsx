@@ -518,6 +518,14 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
         const url = getGasUrl();
         if (!url) return;
 
+        // Map UI status to backend enums
+        const statusMap: Record<string, string> = {
+            'Attending': 'accepted',
+            'Not Attending': 'declined',
+            'Maybe': 'tentative'
+        };
+        const backendStatus = statusMap[status] || status.toLowerCase();
+
         // Find existing RSVP id for this event/person combination if any.
         // For now, let's assume we can just use `updateRow` with a composite-like ID or we just save new.
         // A proper implementation would need `id` from the fetch.
@@ -532,7 +540,7 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
             updateData: {
                 event_id: eventId,
                 person_id: personId,
-                rsvp_status: status
+                rsvp_status: backendStatus
             }
         });
     } catch(e: any) {
