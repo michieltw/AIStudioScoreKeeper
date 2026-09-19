@@ -182,7 +182,6 @@ export default function GameSummaryModal({
 
     // Push to Google Sheets database if configured
     const gasUrl = getGasUrl();
-    const gasToken = localStorage.getItem('blackout_gas_token') || '';
     if (gasUrl && !isFinalized) {
       try {
         const gameId = `${now}_${cleanHome}_${cleanAway}_${Date.now()}`;
@@ -241,20 +240,12 @@ export default function GameSummaryModal({
               status: "completed"
             }],
             game_events: logs.map(l => {
-              let mappedEventType = 'other';
-              if (l.EventType === 'shot') mappedEventType = 'shot_on_goal';
-              else if (l.EventType === 'goal') mappedEventType = 'goal_even_strength';
-              else if (l.EventType === 'penalty') mappedEventType = 'penalty';
-              else if (l.EventType === 'faceoff') mappedEventType = 'faceoff_won';
-              else if (l.EventType === 'icing') mappedEventType = 'icing';
-              else if (l.EventType === 'offside') mappedEventType = 'offside';
-
               return {
                 id: Date.now().toString() + Math.random(),
                 game_id: eventId || gameId,
                 period: l.Period,
                 time_left: l.ClockTime,
-                trigger_event_type: mappedEventType,
+                trigger_event_type: l.EventType,
                 trigger_team_id: l.Team,
               description: l.Description,
               x_coordinate: l.X,
@@ -270,6 +261,7 @@ export default function GameSummaryModal({
 
         // Clear cache so that Stats and Standings update with the new game
         clearGasCache();
+        localStorage.removeItem('blackout_hockey_saved_game');
       } catch (err) {
         console.error("Failed to push to database:", err);
       }
