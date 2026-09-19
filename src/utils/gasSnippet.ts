@@ -389,7 +389,14 @@ function doPost(e) {
       if (!sheet) throw new Error("Sheet niet gevonden: " + sheetName);
 
       if (Array.isArray(rowData)) {
-        sheet.appendRow(rowData.map(sanitizeField));
+        if (rowData.length > 0 && Array.isArray(rowData[0])) {
+          // Bulk insert of 2D array
+          const sanitizedData = rowData.map(row => row.map(sanitizeField));
+          sheet.getRange(sheet.getLastRow() + 1, 1, sanitizedData.length, sanitizedData[0].length).setValues(sanitizedData);
+        } else {
+          // Single row append of 1D array
+          sheet.appendRow(rowData.map(sanitizeField));
+        }
       }
       return ContentService.createTextOutput(JSON.stringify({status: "Success"})).setMimeType(ContentService.MimeType.JSON);
     }
@@ -475,6 +482,7 @@ function doPost(e) {
           const gamesData = gamesSheet.getDataRange().getValues();
           const sheetHeaders = gamesData[0] || headers;
           const idIdx = sheetHeaders.indexOf('id');
+          const seasonIdx = sheetHeaders.indexOf('season_id');
 
           data.newSchema.games.forEach(g => {
             const gameId = g['id'];
@@ -487,6 +495,11 @@ function doPost(e) {
                   break;
                 }
               }
+            }
+
+            // If the game exists and the payload is trying to set season_id to "current", preserve the original season_id
+            if (rowIndex !== -1 && g['season_id'] === 'current' && seasonIdx !== -1) {
+                g['season_id'] = gamesData[rowIndex][seasonIdx];
             }
 
             if (rowIndex !== -1) {
