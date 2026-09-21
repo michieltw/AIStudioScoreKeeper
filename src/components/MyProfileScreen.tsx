@@ -724,8 +724,8 @@ export default function MyProfileScreen({ currentUser, viewedPerson, onBack }: M
                                 <div className="flex items-center gap-2">
                                     {profileData?.status && (
                                         <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
-                                            profileData.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                            profileData.status === 'Retired' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                            profileData.status.toLowerCase() === 'active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                            profileData.status.toLowerCase() === 'retired' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                                             'bg-neutral-500/10 text-neutral-400 border-neutral-500/20'
                                         }`}>
                                             {profileData.status}
