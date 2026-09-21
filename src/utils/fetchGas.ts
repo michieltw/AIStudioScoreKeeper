@@ -79,6 +79,14 @@ export const fetchGasData = async (
     method: 'POST',
     body: JSON.stringify(payload)
   }).then(async (response) => {
+    if (response.ok && action === 'saveGame') {
+      try {
+        localStorage.removeItem('blackout_hockey_saved_game');
+      } catch (e) {
+        console.warn('Failed to clear saved game from local storage', e);
+      }
+    }
+
     // If it's a cacheable request and successful, store it in cache
     if (cacheKey && response.ok) {
       // Clone response so we can read it and still return it
