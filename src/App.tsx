@@ -63,6 +63,8 @@ export default function App() {
     id?: string;
     homeTeam: string;
     awayTeam: string;
+    homeTeamId?: string;
+    awayTeamId?: string;
     homeRoster?: Player[];
     awayRoster?: Player[];
     date?: string;

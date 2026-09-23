@@ -101,6 +101,8 @@ interface SettingsScreenProps {
     id?: string;
     homeTeam: string;
     awayTeam: string;
+    homeTeamId?: string;
+    awayTeamId?: string;
     homeRoster?: Player[];
     awayRoster?: Player[];
     date?: string;
@@ -459,6 +461,8 @@ export default function SettingsScreen({ scheduledGameData, contract, onStart, o
       eventId: scheduledGameData?.id,
       homeTeam: finalHome,
       awayTeam: finalAway,
+      homeTeamId: scheduledGameData?.homeTeamId,
+      awayTeamId: scheduledGameData?.awayTeamId,
       homeColor,
       awayColor,
       homeLogo,

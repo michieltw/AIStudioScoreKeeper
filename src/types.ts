@@ -134,6 +134,8 @@ export interface ScheduledGame {
   id: string;
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: string;
+  awayTeamId?: string;
   date: string;
   time: string;
   location?: string;
@@ -236,6 +238,8 @@ export interface GameConfig {
   eventId?: string;
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: string;
+  awayTeamId?: string;
   homeColor?: string;
   awayColor?: string;
   homeLogo?: string;
