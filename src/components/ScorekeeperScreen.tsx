@@ -195,6 +195,8 @@ export default function ScorekeeperScreen({ contract, onBack }: { contract: Sett
           });
         }}
         onFinishGame={handleFinishGame}
+        homeTeamId={config.homeTeamId}
+        awayTeamId={config.awayTeamId}
         homeTeam={config.homeTeam}
         awayTeam={config.awayTeam}
         homeColor={config.homeColor}

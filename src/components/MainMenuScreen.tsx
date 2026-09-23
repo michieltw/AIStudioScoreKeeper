@@ -84,6 +84,8 @@ export default function MainMenuScreen({
                 id: row[idIdx],
                 homeTeam: hTeamId ? mappedTeams[hTeamId] || hTeamId : undefined,
                 awayTeam: aTeamId ? mappedTeams[aTeamId] || aTeamId : undefined,
+                homeTeamId: hTeamId,
+                awayTeamId: aTeamId,
                 date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',
                 time: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[1]?.substring(0,5) || '' : '',
                 location: row[venueIdx],
@@ -100,6 +102,8 @@ export default function MainMenuScreen({
                 date: row[scheduledAtIdx] ? row[scheduledAtIdx].toString().split('T')[0] : '',
                 homeTeam: hTeamId ? mappedTeams[hTeamId] || hTeamId : undefined,
                 awayTeam: aTeamId ? mappedTeams[aTeamId] || aTeamId : undefined,
+                homeTeamId: hTeamId,
+                awayTeamId: aTeamId,
                 homeScore: row[homeScoreIdx],
                 awayScore: row[awayScoreIdx],
                 location: row[venueIdx]

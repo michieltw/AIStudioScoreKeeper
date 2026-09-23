@@ -54,6 +54,8 @@ interface GameSummaryModalProps {
   isOfficialGame?: boolean;
   onUpdateEvents: (newEvents: GameEvent[]) => void;
   onFinishGame: () => void;
+  homeTeamId?: string;
+  awayTeamId?: string;
   homeTeam?: string;
   awayTeam?: string;
   homeColor?: string;
@@ -79,6 +81,8 @@ export default function GameSummaryModal({
   isOfficialGame,
   onUpdateEvents,
   onFinishGame,
+  homeTeamId,
+  awayTeamId,
   homeTeam = '',
   awayTeam = '',
   homeColor = '',
@@ -217,6 +221,8 @@ export default function GameSummaryModal({
           Date: date || now,
           HomeTeam: homeTeam,
           AwayTeam: awayTeam,
+          HomeTeamId: homeTeamId || homeTeam,
+          AwayTeamId: awayTeamId || awayTeam,
           HomeScore: gameState.scoreHome,
           AwayScore: gameState.scoreAway,
           HomeSOG: gameState.sogHome,
@@ -233,8 +239,8 @@ export default function GameSummaryModal({
             games: [{
               id: eventId || gameId,
               season_id: "current",
-              home_team_id: game.HomeTeam,
-              away_team_id: game.AwayTeam,
+              home_team_id: game.HomeTeamId,
+              away_team_id: game.AwayTeamId,
               venue_id: game.Location,
               home_score: game.HomeScore,
               away_score: game.AwayScore,
