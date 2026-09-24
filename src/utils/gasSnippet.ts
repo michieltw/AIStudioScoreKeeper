@@ -469,6 +469,22 @@ function doPost(e) {
     }
 
     if (data.action === 'saveGame') {
+      let teamNameIdMap = {};
+      let teamsSheet = ss.getSheetByName("teams");
+      if (teamsSheet) {
+        const teamsData = teamsSheet.getDataRange().getValues();
+        if (teamsData.length > 1) {
+           const tHeaders = teamsData[0];
+           const tIdIdx = tHeaders.indexOf('id');
+           const tNameIdx = tHeaders.indexOf('name');
+           if (tIdIdx !== -1 && tNameIdx !== -1) {
+             for (let i = 1; i < teamsData.length; i++) {
+                teamNameIdMap[teamsData[i][tNameIdx].toString().toLowerCase()] = teamsData[i][tIdIdx];
+             }
+           }
+        }
+      }
+
       if (data.newSchema) {
         if (data.newSchema.games) {
           let gamesSheet = ss.getSheetByName("games");
@@ -485,6 +501,13 @@ function doPost(e) {
           const seasonIdx = sheetHeaders.indexOf('season_id');
 
           data.newSchema.games.forEach(g => {
+            if (g['home_team_id'] && teamNameIdMap[g['home_team_id'].toString().toLowerCase()]) {
+               g['home_team_id'] = teamNameIdMap[g['home_team_id'].toString().toLowerCase()];
+            }
+            if (g['away_team_id'] && teamNameIdMap[g['away_team_id'].toString().toLowerCase()]) {
+               g['away_team_id'] = teamNameIdMap[g['away_team_id'].toString().toLowerCase()];
+            }
+
             const gameId = g['id'];
             let rowIndex = -1;
 
@@ -525,6 +548,10 @@ function doPost(e) {
           }
           const headers = dbSchema["game_events"];
           data.newSchema.game_events.forEach(e => {
+            if (e.trigger_team_id && teamNameIdMap[e.trigger_team_id.toString().toLowerCase()]) {
+               e.trigger_team_id = teamNameIdMap[e.trigger_team_id.toString().toLowerCase()];
+            }
+
             // Map frontend generic event types to strictly allowed enums
             let mappedEventType = e.trigger_event_type;
             if (mappedEventType === 'goal') mappedEventType = 'goal_even_strength';
