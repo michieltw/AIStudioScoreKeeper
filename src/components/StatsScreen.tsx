@@ -463,7 +463,7 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
                 { key: 'games_played', label: 'GP' },
                 { key: 'wins', label: 'W' },
                 { key: 'losses', label: 'L' },
-                { key: 'ties', label: 'T' },
+                { key: 'ties', label: 'OTL' },
                 { key: 'points', label: 'PTS' }
               ];
               const colIndices = displayColumns.map(c => ({
@@ -570,7 +570,7 @@ export default function StatsScreen({ onBack }: StatsScreenProps) {
                 { key: 'games_played', label: 'GP' },
                 { key: 'wins', label: 'W' },
                 { key: 'losses', label: 'L' },
-                { key: 'ties', label: 'T' },
+                { key: 'ties', label: 'OTL' },
                 { key: 'goals_against_average', label: 'GAA' },
                 { key: 'save_percentage', label: 'SV%' }
               ];
