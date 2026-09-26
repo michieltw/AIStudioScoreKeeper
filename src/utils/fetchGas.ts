@@ -94,6 +94,16 @@ export const fetchGasData = async (
         console.warn('Failed to cache gas response', e);
       }
     }
+
+    // Automatically clear saved game state on successful saveGame
+    if (action === 'saveGame' && response.ok) {
+      try {
+        localStorage.removeItem('blackout_hockey_saved_game');
+      } catch (e) {
+        console.warn('Failed to remove saved game state', e);
+      }
+    }
+
     return response;
   }).finally(() => {
     if (cacheKey) {
