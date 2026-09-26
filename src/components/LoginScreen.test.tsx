@@ -12,6 +12,17 @@ describe('LoginScreen Component', () => {
   });
 
   it('renders correctly with email and password inputs', () => {
+    (global.fetch as Mock).mockImplementation((url) => {
+        return Promise.resolve({
+            ok: true,
+            json: async () => ({
+                status: 'Success',
+                data: [['id', 'name'], ['league-1', 'Test League']]
+            }),
+            clone: function() { return this; }
+        });
+    });
+
     const mockOnLogin = vi.fn();
     render(<LoginScreen onLogin={mockOnLogin} />);
 
@@ -29,7 +40,7 @@ describe('LoginScreen Component', () => {
         if (url === '/api/login') {
             return Promise.resolve({
                 ok: false,
-                json: async () => ({ success: false, message: 'Invalid credentials' }),
+                json: async () => ({ success: false, message: 'Invalid email or password' }),
                 clone: function() { return this; }
             });
         }
@@ -47,15 +58,32 @@ describe('LoginScreen Component', () => {
     const user = userEvent.setup();
     render(<LoginScreen onLogin={mockOnLogin} />);
 
+    // Wait for the league fetch to complete
+    await screen.findByRole('option', { name: /Test League/i });
+
     const emailInput = screen.getByLabelText(/Email/i);
     const passwordInput = screen.getByLabelText(/Password/i);
     const loginButton = screen.getByRole('button', { name: /LOGIN/i });
 
     await user.type(emailInput, 'test@example.com');
     await user.type(passwordInput, 'wrong');
+
+    // Clear mocks before login fetch so we only count that
+    (global.fetch as Mock).mockClear();
+    (global.fetch as Mock).mockImplementation((url) => {
+        if (url === '/api/login') {
+            return Promise.resolve({
+                ok: false,
+                json: async () => ({ success: false, message: 'Invalid email or password' }),
+                clone: function() { return this; }
+            });
+        }
+        return Promise.resolve({ok: true, json: async () => ({}), clone: function() { return this; }});
+    });
+
     await user.click(loginButton);
 
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(mockOnLogin).not.toHaveBeenCalled();
     expect(await screen.findByText(/Invalid email or password/i)).toBeInTheDocument();
   });

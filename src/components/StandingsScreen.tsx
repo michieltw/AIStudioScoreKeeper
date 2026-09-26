@@ -263,7 +263,7 @@ export default function StandingsScreen({ onBack }: StandingsScreenProps) {
                 { key: 'games_played', label: 'GP' },
                 { key: 'wins', label: 'W' },
                 { key: 'losses', label: 'L' },
-                { key: 'ties', label: 'T' },
+                { key: 'ties', label: 'OTL' },
                 { key: 'points', label: 'PTS' }
               ];
 
